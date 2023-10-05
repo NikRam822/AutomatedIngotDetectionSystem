@@ -1,7 +1,7 @@
 import sys
 import os
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QScrollArea, QMessageBox
-from PyQt5.QtGui import QPixmap
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QScrollArea, QMessageBox
+from PyQt6.QtGui import QPixmap
 from PIL import Image
 
 
@@ -74,4 +74,4 @@ class ImageChangerApp(QWidget):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = ImageChangerApp()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
