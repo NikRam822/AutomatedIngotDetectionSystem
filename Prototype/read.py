@@ -28,13 +28,13 @@ def cropImage(image,filename):
     cv.imwrite('output/cropped_' + filename, cropped_rectangle)
     return cropped_rectangle
 
-# img = cv.imread('photos/IMG-20221110-WA0028.jpg')
-# _,filename = os.path.split('photos/IMG-20221110-WA0028.jpg')
-# croppedImg = cropImage(img,filename)
+img = cv.imread('photos/IMG-20221110-WA0029 - Dross.jpg')
+_,filename = os.path.split('photos/IMG-20221110-WA0029 - Dross.jpg')
+croppedImg = cropImage(img,filename)
 
-# cv.imshow('Picture',img)
-# cv.imshow('Resized ',croppedImg)
-# cv.waitKey(0)
+cv.imshow('Picture',img)
+cv.imshow('Resized ',croppedImg)
+cv.waitKey(0)
 
 
 
