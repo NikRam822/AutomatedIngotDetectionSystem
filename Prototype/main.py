@@ -1,15 +1,19 @@
 import sys
 import os
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QScrollArea, QMessageBox
-from PyQt5.QtGui import QPixmap
+
+import cv2
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QScrollArea, QMessageBox
+from PyQt6.QtGui import QPixmap
 from PIL import Image
+
+import read
 
 
 class ImageChangerApp(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.image_folder = "C:/Users/NIKITOS/Pictures/Saved Pictures"
+        self.image_folder = "photos"
         self.image_files = [f for f in os.listdir(self.image_folder) if
                             f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
         self.current_image_index = 0
@@ -50,15 +54,23 @@ class ImageChangerApp(QWidget):
 
             try:
                 original_image = Image.open(image_path)
-                resized_image = original_image.resize(self.target_size, Image.LANCZOS)
-                resized_image_path = os.path.join(self.image_folder,
-                                                  'resized_' + self.image_files[self.current_image_index])
+                original_image = cv2.imread(image_path)
+                _, filename = os.path.split(image_path)
+                cropped_image = read.cropImage(original_image, filename)
+
+                resized_image = cropped_image.resize(self.target_size, Image.LANCZOS)
+                resized_image_path = os.path.join('output',
+                                                  'cropped_' + self.image_files[self.current_image_index])
                 resized_image.save(resized_image_path)
 
-                pixmap = QPixmap(resized_image_path)
+
+
+
+                # pixmap = QPixmap(resized_image_path)
+                pixmap = QPixmap(cropped_image)
                 self.image_label.setPixmap(pixmap)
 
-                os.remove(resized_image_path)
+                # os.remove(resized_image_path)
             except Exception as e:
                 QMessageBox.warning(self, 'Ошибка', f'Ошибка при открытии изображения: {str(e)}')
 
@@ -74,4 +86,4 @@ class ImageChangerApp(QWidget):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = ImageChangerApp()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
