@@ -14,5 +14,5 @@ Run read.py
 
 1) Install target packages
 2) Go to folder: aidd/Prototype
-3) ```python pip freeze > requirements.txt ```
+3) ```pip freeze > requirements.txt```
 4) Push 
