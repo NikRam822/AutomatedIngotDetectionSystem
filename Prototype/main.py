@@ -9,11 +9,11 @@ class ImageChangerApp(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.image_folder = "C:/Users/NIKITOS/Pictures/Saved Pictures"
+        self.image_folder = "output"
         self.image_files = [f for f in os.listdir(self.image_folder) if
                             f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
         self.current_image_index = 0
-        self.target_size = (400, 400)
+        self.target_size = (300, 300)
 
         self.initUI()
 
@@ -38,7 +38,7 @@ class ImageChangerApp(QWidget):
 
         self.setLayout(self.layout)
 
-        self.setGeometry(100, 100, 400, 300)
+        self.setGeometry(100, 100, 450, 450)
         self.setWindowTitle('Image Changer App')
         self.show()
 
@@ -54,7 +54,7 @@ class ImageChangerApp(QWidget):
                 resized_image_path = os.path.join(self.image_folder,
                                                   'resized_' + self.image_files[self.current_image_index])
                 resized_image.save(resized_image_path)
-
+                print(resized_image_path)
                 pixmap = QPixmap(resized_image_path)
                 self.image_label.setPixmap(pixmap)
 
