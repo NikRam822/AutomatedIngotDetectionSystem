@@ -3,13 +3,15 @@ import os
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QScrollArea, QMessageBox
 from PyQt6.QtGui import QPixmap
 from PIL import Image
+import cv2
+import read
 
 
 class ImageChangerApp(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.image_folder = "output"
+        self.image_folder = "Prototype/photos"
         self.image_files = [f for f in os.listdir(self.image_folder) if
                             f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
         self.current_image_index = 0
@@ -49,7 +51,10 @@ class ImageChangerApp(QWidget):
             image_path = os.path.join(self.image_folder, self.image_files[self.current_image_index])
 
             try:
-                original_image = Image.open(image_path)
+                img = cv2.imread(image_path)
+                _,filename = os.path.split(image_path)
+                read.cropImage(img,filename)
+                original_image = Image.open('Prototype/output/cropped_'+filename)
                 resized_image = original_image.resize(self.target_size, Image.LANCZOS)
                 resized_image_path = os.path.join(self.image_folder,
                                                   'resized_' + self.image_files[self.current_image_index])

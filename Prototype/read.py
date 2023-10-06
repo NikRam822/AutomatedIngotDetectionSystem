@@ -25,16 +25,16 @@ def cropImage(image,filename):
     # Crop the rectangle from the image
     cropped_rectangle = image[int(y1):int(y2), int(x1):int(x2)]
 
-    cv.imwrite('output/cropped_' + filename, cropped_rectangle)
+    cv.imwrite('Prototype/output/cropped_' + filename, cropped_rectangle)
     return cropped_rectangle
 
-img = cv.imread('photos/IMG-20221110-WA0029 - Dross.jpg')
-_,filename = os.path.split('photos/IMG-20221110-WA0029 - Dross.jpg')
-croppedImg = cropImage(img,filename)
-
-cv.imshow('Picture',img)
-cv.imshow('Resized ',croppedImg)
-cv.waitKey(0)
+# img = cv.imread('photos/IMG-20221110-WA0029 - Dross.jpg')
+# _,filename = os.path.split('photos/IMG-20221110-WA0029 - Dross.jpg')
+# croppedImg = cropImage(img,filename)
+#
+# cv.imshow('Picture',img)
+# cv.imshow('Resized ',croppedImg)
+# cv.waitKey(0)
 
 
 
