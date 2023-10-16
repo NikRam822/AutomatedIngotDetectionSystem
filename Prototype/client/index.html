@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automated Ingot Defect Detection System</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="js/scripts.js"></script>
+</head>
+
+<body>
+<div class="layout">
+    <div class="header">
+        <h1>Automated Ingot Defects Detection System</h1>
+    </div>
+
+    <div class="content">
+        <div>
+            <div class="sidebar">
+                <h3>Choose a camera:</h3>
+                <select id="cameraSelect" onchange="changeCamera()" style="width: 100%">
+                    <option value="" disabled selected>No camera detected</option>
+                </select>
+
+                <img class="image" id="videoFeed" width="320" height="240">
+                <!-- добавить кнопки настройки камеры рядом с картинкой -->
+
+                <div style="width: 100%">
+                    <button class="button" id="captureButton" disabled onclick="capturePhoto()">Take a photo</button>
+                </div>
+            </div>
+
+            <div></div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                <h3>Ingot ID: <div id="ingotId">no ingot</div></h3>
+            </div>
+            
+            <div class="row">
+                <img class="image" id="displayed_image" src="" alt="No Image" width="500" height="500">
+                <!-- Кнопки принятия решения справа от картинки, большие -->
+                <div class="column" id="decisionPanel"></div>
+            </div>
+
+            <div class="message" id="success_message"></div>
+        </div>
+    </div>
+
+    <script>document.addEventListener('DOMContentLoaded', initialize())</script>
+</div>
+</body>
+</html>
