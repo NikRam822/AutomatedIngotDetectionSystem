@@ -1,3 +1,4 @@
+// const server = 'http://217.18.62.231:5000';
 const server = 'http://127.0.0.1:5000';
 const messageTimeout = 3000;
 
@@ -82,7 +83,7 @@ function nextImage() {
 function getDecisionsList() {
     // TODO: Здесь надо запрашивать мапу допустимых значений дефектов
     const decisions = new Map([
-        ['OK', ['#393', 'OK']], ['DROSS', ['#933', 'Dross']], ['COLOR', ['#933', 'Discolorage']], ['EMPTY', ['#993', 'No ingot']], ['BAD_IMAGE', ['#993', 'Bad image']]
+        ['OK', ['#0c9', 'OK']], ['DROSS', ['#ff3e41', 'Dross']], ['COLOR', ['#ff3e41', 'Discolorage']], ['EMPTY', ['#36558F', 'No ingot']], ['BAD_IMAGE', ['#36558F', 'Bad image']]
     ]);
     const select = document.getElementById('decisionPanel');
     decisions.forEach((value, key) => {
@@ -109,6 +110,7 @@ function submitMark(key) {
             console.log('Submit successful');
             $('#success_message').text('Submit successful');
             setTimeout(function() { $('#success_message').text(''); }, messageTimeout);
+            nextImage();
         },
         error: function(error) {
             console.log(error.responseText);

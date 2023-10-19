@@ -1,0 +1,59 @@
+@startuml "AIDD"
+
+component "Front-end" <<UI>> as Web
+
+interface API
+
+package "Back-end" as Back {
+    component "Core"
+    component "ML" {
+        portin "Image Input" as ml_input
+        portout "Mark" as ml_out
+    }
+    component "Database"
+    component "Cameras" {
+        port "Control" as cameras_io
+        port "HW" as cameras_dev
+    }
+    component "Configuration" as Config
+    component "Image Processor" as Processor {
+        portin "Image Input" as image
+        portout "Image Out" as adjusted
+    }
+}
+
+node "Devices" {
+    component "Camera 1" as Cam1
+    component "Camera 2" as Cam2
+    component "Camera 3" as Cam3
+    component "Camera 4" as Cam4
+    component "Camera 5" as Cam5
+    component "Camera 6" as Cam6
+}
+
+database "DB" {
+    folder "Input"
+    folder "Marked"
+    file "Data.csv"
+}
+
+file "Config.ini" as ConfigFile
+
+Web ..> API: Use
+
+API o-- Core
+Core ..> cameras_io: Take pics
+Core <- Config: Setup
+Core -> Database: Update
+Core -> ml_input
+Core <- ml_out
+
+cameras_dev <-> Devices
+
+Cameras -> image
+Core <- adjusted
+
+Config <.. ConfigFile: Read
+Database -> DB
+
+@enduml
