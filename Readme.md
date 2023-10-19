@@ -8,7 +8,7 @@ Install Python 3.9
 <b>2) pip install -r requirements.txt</b> <br>
 <b>3) Run csv_generator.py: python csv_generator.py </b> <br>
 <b>4) Run flask_server.py: <br> waitress-serve --host=0.0.0.0 --port=5000 flask_server:app </b> <br>
-<b>4) Open client.html (from Explorer in browser)  </b> <br>
+<b>4) Open aidd/Prototype/client/index.html (from Explorer in browser)  </b> <br>
 
 #### About csv:
 
@@ -22,7 +22,7 @@ The file looks as follows:
 There are 4 columns in this file:
 1) id_camera - Camera from which the image was received (so far, always 1, because there is only one camera)
 2) id_img - generated image id
-3) source_img - absolute path to the image files from output
+3) source_img - absolute path to the image files from aidd/Prototype/client/output
 4) text - operator's verdict in text form
 
 
