@@ -16,7 +16,7 @@ csv_file_path = 'data.csv'
 current_image_index = 0
 
 # Create a folder to save the photos in if there is none
-photo_folder = 'output'
+photo_folder = '../client/output'
 os.makedirs(photo_folder, exist_ok=True)
 image_id_counter = 0
 
@@ -206,7 +206,7 @@ def capture_photo(camera_id, photo_path):
 
 if __name__ == '__main__':
     # For dev server (flask --app flask_server run)
-    app.run(debug=True)
+    #app.run(debug=True)
 
     # For Production server (waitress-serve --host=127.0.0.1 --port=5000 flask_server:app)
-    # serve(app, host='0.0.0.0', port=5000)
+    serve(app, host='0.0.0.0', port=5000)

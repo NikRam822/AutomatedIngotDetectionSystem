@@ -1,7 +1,8 @@
-const server = 'http://127.0.0.1:5000'
-const messageTimeout = 3000
+const server = 'http://127.0.0.1:5000';
+const messageTimeout = 3000;
 
-var currentIdImg = '';
+// Используем localStorage для хранения currentIdImg
+var currentIdImg = localStorage.getItem('currentIdImg') || '';
 
 function showId(id) {
     $('#ingotId').text(id);
@@ -59,7 +60,6 @@ function capturePhoto() {
 function nextImage() {
     $('#success_message').text('');
     $('#decisionInput').val('');
-    currentIdImg = '';
 
     $.ajax({
         url: server + '/image_next',
@@ -69,8 +69,9 @@ function nextImage() {
         },
         success: function(data) {
             currentIdImg = data.id;
+            localStorage.setItem('currentIdImg', currentIdImg);
             $('#displayed_image').attr('src', data.source);
-            $('#current_id').text('Current ID: ' + currentIdImg);
+            $('#ingotId').text('Ingot ID: ' + currentIdImg);
         },
         error: function(error) {
             console.log(error.responseText);
