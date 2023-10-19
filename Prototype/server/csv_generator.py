@@ -22,11 +22,3 @@ def generate_csv(image_folder, csv_file_path):
                 'source_img': image_path,
                 'text': ''
             })
-
-if __name__ == '__main__':
-    # Specify the path to the folder with images and the path to save the CSV file
-    image_folder_path = '../client/output'
-    csv_file_path = 'data.csv'
-
-    generate_csv(image_folder_path, csv_file_path)
-    print(f"CSV file generated at {csv_file_path}")

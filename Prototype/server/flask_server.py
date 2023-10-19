@@ -1,25 +1,22 @@
-import cv2
 from flask import Flask, Response, request, jsonify
 from flask_cors import CORS, cross_origin
 from waitress import serve
+from config import csv_file_path, input_folder, output_folder
+
 import csv
+import cv2
 import json
 import os
 import threading
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True, origins=['*', 'null'])
-# Path to CSV file
-csv_file_path = 'data.csv'
 
 # Current image index
 current_image_index = 0
 
 # Create a folder to save the photos in if there is none
-photo_folder = '../client/output'
-os.makedirs(photo_folder, exist_ok=True)
 image_id_counter = 0
-
 
 # Dictionary to store counters for each camera
 photo_counters = {}
@@ -118,15 +115,14 @@ def index():
 @app.route('/video_feed/<int:camera_id>')
 @cross_origin(supports_credentials=True)
 def video_feed(camera_id):
-    return Response(generate_frames(camera_id),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(generate_frames(camera_id), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/photo/<int:camera_id>', methods=['POST'])
 @cross_origin(supports_credentials=True)
 def capture_photo_route(camera_id):
     global photo_counters
     photo_name = f'photo_camera_{camera_id}_{photo_counters[camera_id]}.jpg'
-    photo_path = os.path.join(photo_folder, photo_name)
+    photo_path = os.path.join(input_folder, photo_name)
     photo_counters[camera_id] += 1
 
     # Start a new thread for capturing photo
@@ -201,12 +197,9 @@ def capture_photo(camera_id, photo_path):
     # Return id_img
     return id_img
 
-
-
-
 if __name__ == '__main__':
     # For dev server (flask --app flask_server run)
-    #app.run(debug=True)
+    app.run(debug=True)
 
     # For Production server (waitress-serve --host=127.0.0.1 --port=5000 flask_server:app)
-    serve(app, host='0.0.0.0', port=5000)
+    # serve(app, host='0.0.0.0', port=5000, device='/dev/video0')
