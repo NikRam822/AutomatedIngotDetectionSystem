@@ -24,18 +24,20 @@
                 </select>
 
                 <!-- Sliders for adjusting brightness and contrast -->
-<!--                <label for="brightness">Brightness:</label>-->
-<!--                <input type="range" id="brightness" min="-100" max="100" value="0" oninput="updateBrightnessContrast()">-->
-<!--                <br>-->
-<!--                <label for="contrast">Contrast:</label>-->
-<!--                <input type="range" id="contrast" min="0" max="3" step="0.1" value="1.0" oninput="updateBrightnessContrast()">-->
+                <label for="brightness">Brightness:</label>
+                <input type="range" id="brightness" min="-255" max="255" value="0" step="1"
+                       oninput="updateBrightnessContrast()">
+                <br>
+                <label for="contrast">Contrast:</label>
+                <input type="range" id="contrast" min="0.01" max="3.0" step="0.001" value="1.0"
+                       oninput="updateBrightnessContrast()">
 
                 <img class="image" id="videoFeed" width="320" height="240">
 
                 <div style="width: 100%">
-                <button class="button" id="captureButton" disabled onclick="saveFrame()">Take a photo</button>
+                    <button class="button" id="captureButton" disabled onclick="saveFrame()">Take a photo</button>
                 </div>
-                 <div class="message" id="success_message_photo"></div>
+                <div class="message" id="success_message_photo"></div>
             </div>
 
             <div></div>
@@ -43,11 +45,13 @@
 
         <div class="container">
             <div class="row">
-                <h3>Ingot ID: <div id="ingotId">no ingot</div></h3>
+                <h3>Ingot ID:
+                    <div id="ingotId">no ingot</div>
+                </h3>
             </div>
-              <div style="width: 100%">
-                    <button class="button" id="nextImage" onclick="nextImage()">Next image</button>
-                </div>
+            <div style="width: 100%">
+                <button class="button" id="nextImage" onclick="nextImage()">Next image</button>
+            </div>
 
             <div class="row">
                 <img class="image" id="displayed_image" src="" alt="No Image" width="640" height="480">

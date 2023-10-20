@@ -46,10 +46,13 @@ function changeCamera() {
     }
 }
 
-   function saveFrame() {
+function saveFrame() {
     $('#success_message_photo').text('');
-     const selectedCamera = document.getElementById('cameraSelect').value;
-    fetch(server+ `/save_frame/${selectedCamera}`, {
+    const selectedCamera = document.getElementById('cameraSelect').value;
+    const brightness = document.getElementById('brightness').value;
+    const contrast = document.getElementById('contrast').value;
+
+    fetch(server + `/save_frame/${selectedCamera}?brightness=${brightness}&contrast=${contrast}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -63,14 +66,15 @@ function changeCamera() {
     })
     .then(data => {
         console.log('Photo successful');
-            $('#success_message_photo').text('Photo successful');
-            setTimeout(function () { $('#success_message_photo').text(''); }, messageTimeout);
-            nextImage(true)
+        $('#success_message_photo').text('Photo successful');
+        setTimeout(function () { $('#success_message_photo').text(''); }, messageTimeout);
+        nextImage(true);
     })
     .catch(error => {
         console.error('There was an error:', error);
     });
 }
+
 
 function nextImage(last) {
     $('#success_message').text('');

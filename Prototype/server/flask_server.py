@@ -135,12 +135,18 @@ def save_frame(camera_id):
     global last_frame
     global photo_counters
     if last_frame is not None:
+        brightness = request.args.get('brightness', default=1.0, type=float)
+        contrast = request.args.get('contrast', default=1.0, type=float)
+
         photo_name = f'photo_camera_{camera_id}_{photo_counters[camera_id]}.jpg'
         photo_path = os.path.join(input_folder, photo_name)
         photo_counters[camera_id] += 1
-        cv2.imwrite(photo_path, last_frame)
 
-        # Записываем данные в CSV
+        # Apply brightness and contrast settings to the frame
+        adjusted_frame = cv2.convertScaleAbs(last_frame, alpha=contrast, beta=brightness)
+        cv2.imwrite(photo_path, adjusted_frame)
+
+        # Write the data to CSV
         append_to_csv(camera_id, photo_path)
 
         return jsonify({'message': 'The frame has been saved successfully.', 'path': photo_path})
