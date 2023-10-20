@@ -2,7 +2,7 @@
 const server = 'http://127.0.0.1:5000';
 const messageTimeout = 3000;
 
-// Используем localStorage для хранения currentIdImg
+// Use localStorage to store currentIdImg
 var currentIdImg = localStorage.getItem('currentIdImg') || '';
 
 function showId(id) {
@@ -46,35 +46,52 @@ function changeCamera() {
     }
 }
 
-function capturePhoto() {
-    const selectedCamera = document.getElementById('cameraSelect').value;
-    fetch(server + `/photo/${selectedCamera}`, { method: 'POST' })
-        .then(response => response.json())
-        .then(data => {
-            alert(`Photo saved along the way: ${data.photo_path}`);
-            changeCamera();
-            location.reload(true);
-        })
-        .catch(error => console.error('Error:', error));
+   function saveFrame() {
+    $('#success_message_photo').text('');
+     const selectedCamera = document.getElementById('cameraSelect').value;
+    fetch(server+ `/save_frame/${selectedCamera}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error while executing the query.');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Photo successful');
+            $('#success_message_photo').text('Photo successful');
+            setTimeout(function () { $('#success_message_photo').text(''); }, messageTimeout);
+            nextImage(true)
+    })
+    .catch(error => {
+        console.error('There was an error:', error);
+    });
 }
 
-function nextImage() {
+function nextImage(last) {
     $('#success_message').text('');
     $('#decisionInput').val('');
 
+    // Параметр last
+    var queryParam = last ? '?last=true' : '';
+
     $.ajax({
-        url: server + '/image_next',
+        url: server + '/image_next' + queryParam,
         type: 'GET',
         xhrFields: {
             withCredentials: true
         },
-        success: function(data) {
+        success: function (data) {
             currentIdImg = data.id;
             localStorage.setItem('currentIdImg', currentIdImg);
             $('#displayed_image').attr('src', data.source);
             $('#ingotId').text('Ingot ID: ' + currentIdImg);
         },
-        error: function(error) {
+        error: function (error) {
             console.log(error.responseText);
         }
     });
@@ -102,18 +119,31 @@ function submitMark(key) {
         url: server + '/submit',
         type: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({id: currentIdImg, text: key}),
+        data: JSON.stringify({ id: currentIdImg, text: key }),
         xhrFields: {
             withCredentials: true
         },
-        success: function(data) {
+        success: function (data) {
             console.log('Submit successful');
             $('#success_message').text('Submit successful');
-            setTimeout(function() { $('#success_message').text(''); }, messageTimeout);
-            nextImage();
+            setTimeout(function () { $('#success_message').text(''); }, messageTimeout);
         },
-        error: function(error) {
+        error: function (error) {
             console.log(error.responseText);
         }
     });
 }
+
+// Function to update brightness and contrast
+function updateBrightnessContrast() {
+    const brightness = document.getElementById('brightness').value;
+    const contrast = document.getElementById('contrast').value;
+    const videoFeed = document.getElementById('videoFeed');
+
+    videoFeed.style.filter = `brightness(${parseInt(brightness)}%) contrast(${parseFloat(contrast)})`;
+}
+
+// Call the updateBrightnessContrast function when sliders are moved
+document.getElementById('brightness').addEventListener('input', updateBrightnessContrast);
+document.getElementById('contrast').addEventListener('input', updateBrightnessContrast);
+
