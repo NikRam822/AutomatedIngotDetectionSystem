@@ -23,12 +23,19 @@
                     <option value="" disabled selected>No camera detected</option>
                 </select>
 
+                <!-- Sliders for adjusting brightness and contrast -->
+<!--                <label for="brightness">Brightness:</label>-->
+<!--                <input type="range" id="brightness" min="-100" max="100" value="0" oninput="updateBrightnessContrast()">-->
+<!--                <br>-->
+<!--                <label for="contrast">Contrast:</label>-->
+<!--                <input type="range" id="contrast" min="0" max="3" step="0.1" value="1.0" oninput="updateBrightnessContrast()">-->
+
                 <img class="image" id="videoFeed" width="320" height="240">
-                <!-- добавить кнопки настройки камеры рядом с картинкой -->
 
                 <div style="width: 100%">
-                    <button class="button" id="captureButton" disabled onclick="capturePhoto()">Take a photo</button>
+                <button class="button" id="captureButton" disabled onclick="saveFrame()">Take a photo</button>
                 </div>
+                 <div class="message" id="success_message_photo"></div>
             </div>
 
             <div></div>
@@ -41,7 +48,7 @@
               <div style="width: 100%">
                     <button class="button" id="nextImage" onclick="nextImage()">Next image</button>
                 </div>
-            
+
             <div class="row">
                 <img class="image" id="displayed_image" src="" alt="No Image" width="640" height="480">
                 <!-- Кнопки принятия решения справа от картинки, большие -->
@@ -52,7 +59,9 @@
         </div>
     </div>
 
-    <script>document.addEventListener('DOMContentLoaded', initialize())</script>
+    <script>
+        document.addEventListener('DOMContentLoaded', initialize());
+    </script>
 </div>
 </body>
 </html>

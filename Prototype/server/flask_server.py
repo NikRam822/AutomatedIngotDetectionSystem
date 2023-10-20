@@ -1,4 +1,4 @@
-from flask import Flask, Response, request, jsonify
+from flask import Flask, Response, request, jsonify, send_file
 from flask_cors import CORS, cross_origin
 from waitress import serve
 from config import csv_file_path, input_folder, output_folder
@@ -24,29 +24,41 @@ photo_counters = {}
 # Lock for thread safety
 lock = threading.Lock()
 
+last_frame = None
+
 # Processing GET request image_next
 @app.route('/image_next', methods=['GET'])
 @cross_origin(supports_credentials=True)
 def get_next_image():
     global current_image_index
 
-    # Reading data from CSV file
+    # Чтение данных из CSV-файла
     with open(csv_file_path, mode='r') as csv_file:
         csv_reader = csv.DictReader(csv_file)
         rows = list(csv_reader)
 
-    if rows:
-        # Obtaining data for the current index
+    if not rows:
+        return jsonify({"error": "No images available"}), 404
+
+    # The last parameter in the query
+    last = request.args.get('last')
+
+    if last == 'true':
+        # If the last parameter is present and is 'true', return the latest data
+        last_row = rows[-1]
+        image_id = last_row['id_img']
+        image_source = last_row['source_img']
+    else:
+        # Otherwise, get data for the current index
         row = rows[current_image_index]
         image_id = row['id_img']
         image_source = row['source_img']
 
-        # Increasing the index for the next query
+        # Increase the index for the next query
         current_image_index = (current_image_index + 1) % len(rows)
 
-        return jsonify({"id": image_id, "source": image_source})
-    else:
-        return jsonify({"error": "No images available"}), 404
+    return jsonify({"id": image_id, "source": image_source})
+
 
 # Processing POST submit request
 @app.route('/submit', methods=['POST'])
@@ -117,23 +129,31 @@ def index():
 def video_feed(camera_id):
     return Response(generate_frames(camera_id), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/photo/<int:camera_id>', methods=['POST'])
+@app.route('/save_frame/<int:camera_id>', methods=['POST'])
 @cross_origin(supports_credentials=True)
-def capture_photo_route(camera_id):
+def save_frame(camera_id):
+    global last_frame
     global photo_counters
-    photo_name = f'photo_camera_{camera_id}_{photo_counters[camera_id]}.jpg'
-    photo_path = os.path.join(input_folder, photo_name)
-    photo_counters[camera_id] += 1
+    if last_frame is not None:
+        photo_name = f'photo_camera_{camera_id}_{photo_counters[camera_id]}.jpg'
+        photo_path = os.path.join(input_folder, photo_name)
+        photo_counters[camera_id] += 1
+        cv2.imwrite(photo_path, last_frame)
 
-    # Start a new thread for capturing photo
-    threading.Thread(target=capture_photo, args=(camera_id, photo_path)).start()
+        # Записываем данные в CSV
+        append_to_csv(camera_id, photo_path)
 
-    return jsonify({'photo_path': photo_path})
+        return jsonify({'message': 'The frame has been saved successfully.', 'path': photo_path})
+    else:
+        return jsonify({'message': 'Error: there is no available frame to save.'})
+
 
 def generate_frames(camera_id):
+    global last_frame
     camera = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
     while True:
         success, frame = camera.read()
+        last_frame =frame
         if not success:
             break
         else:
@@ -142,60 +162,33 @@ def generate_frames(camera_id):
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
-def capture_photo(camera_id, photo_path):
-    global image_id_counter
+def append_to_csv(camera_id, photo_path):
+    with open(csv_file_path, mode='a', newline='') as csv_file:
+        fieldnames = ['id_camera', 'id_img', 'source_img', 'text']
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
 
-    with lock:
-        # Reading data from CSV file to get the last recorded id_img
-        with open(csv_file_path, mode='r') as csv_file:
-            csv_reader = csv.DictReader(csv_file)
-            rows = list(csv_reader)
+        # Get the current value of id_img
+        with open(csv_file_path, mode='r') as csv_file_read:
+            reader = csv.DictReader(csv_file_read)
+            rows = list(reader)
+            if not rows:
+                last_id_img = 0
+            else:
+                last_id_img = int(rows[-1]['id_img'])
 
-        # Get the last recorded id_img
-        last_id_img = int(rows[-1]['id_img']) if rows else 0
+        # Increase id_img by 1
+        id_img = last_id_img + 1
 
-        # Increment the global image ID counter
-        image_id_counter = last_id_img + 1
+        # Create a record for CSV
+        new_record = {
+            'id_camera': camera_id,
+            'id_img': id_img,
+            'source_img': photo_path,
+            'text': ''
+        }
 
-        # Open the camera to read the frame
-        camera = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
-
-        # Read the frame
-        success, frame = camera.read()
-        if success:
-            try:
-                # Save the photo
-                cv2.imwrite(os.path.join(photo_path), frame)
-                print(os.path.join(photo_path))
-            except Exception as e:
-                print(f"Error saving image: {e}")
-        else:
-            print("Error capturing frame")
-
-        # Freeing up the cell's resources
-        camera.release()
-
-        # Define id_img as the current counter value
-        id_img = image_id_counter
-
-        # Write the data to a CSV file
-        with open(csv_file_path, mode='a', newline='') as csv_file:
-            fieldnames = ['id_camera', 'id_img', 'source_img', 'text']
-            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-
-            # Create a line with the new data
-            new_row = {
-                'id_camera': camera_id,
-                'id_img': id_img,
-                'source_img': photo_path,
-                'text': ''
-            }
-
-            # Write the string to a CSV file
-            writer.writerow(new_row)
-
-    # Return id_img
-    return id_img
+        # Write the record to a CSV file
+        writer.writerow(new_record)
 
 if __name__ == '__main__':
     # For dev server (flask --app flask_server run)
