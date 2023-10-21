@@ -1,0 +1,13 @@
+@startuml
+!define ENTITY entity
+!define PK <<PK>>
+
+DATABASE "ImageSystem" {
+    ENTITY Image {
+        + id_camera : int PK
+        + id_img : int PK
+        + source_img : string
+        + text : string
+    }
+}
+@enduml
