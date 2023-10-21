@@ -1,0 +1,60 @@
+@startuml
+left to right direction
+package "Automated Ingot Defect Detection" {
+
+package "Ingots quality controlling"{
+usecase (make pass/fail decisions)
+usecase (label shots of ingots sides) as labeling
+usecase (submit) as submit
+
+/' Case relationships '/
+(make pass/fail decisions) <. labeling
+(make pass/fail decisions) <. submit
+}
+
+package "Camera adjustment"{
+usecase (view camera view)
+usecase (adjust brightness/exposure)
+usecase (make a shot)
+usecase (choose a camera)
+usecase (see pre-selected camera)
+usecase (see images from multiple cameras) as multiple
+
+/' Case relationships '/
+(view camera view) <. (choose a camera)
+(adjust brightness/exposure) <|-- (make a shot)
+(choose a camera) <|-- (see pre-selected camera)
+(view camera view) <|-- multiple
+}
+package "AI model"{
+usecase (see a preselected decision on each image) as (see a preselected decision)
+usecase (edit a preselected decision)
+usecase (get a train set - ingots images with decisions) as (get a train set)
+}
+package "Factory communication"{
+usecase (send a signal to the robotic arm)
+usecase (send a signal to the factory)
+usecase (get a signal from the factory)
+usecase (see a countdown timer) as (countdown timer)
+usecase (get data about defects types)
+
+/' Case relationships '/
+(send a signal to the factory) <. (send a signal to the robotic arm)
+}
+}
+
+/' Actors use cases interactions '/
+:Operator: --> (make pass/fail decisions)
+:Operator: --> (view camera view)
+:Operator: --> (adjust brightness/exposure)
+:Operator: --> (see a preselected decision)
+:Operator: --> (edit a preselected decision)
+:Operator: --> (choose a camera)
+:Operator: --> (countdown timer)
+:Operator: --> (get a signal from the factory)
+:Operator: --> (send a signal to the factory)
+
+
+:Statistician: --> (get data about defects types)
+:Scientist: --> (get a train set)
+@enduml
