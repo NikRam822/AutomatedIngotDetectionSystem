@@ -1,13 +1,25 @@
-from flask import Flask, Response, request, jsonify, send_file
+from flask import Flask, Response, request, jsonify
 from flask_cors import CORS, cross_origin
-from waitress import serve
-from config import csv_file_path, input_folder, output_folder
+# from waitress import serve
+
+from camera import Camera, getAllCameras
+from config import configureServer
 
 import csv
-import cv2
 import json
+import logging
 import os
 import threading
+
+configureServer()
+logger = logging.getLogger(__name__)
+
+from config import csv_file_path, input_folder, output_folder
+
+logger.info("Folders:")
+logger.info("  Database: " + csv_file_path)
+logger.info("  Input:    " + input_folder)
+logger.info("  Output:   " + output_folder)
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True, origins=['*', 'null'])
@@ -24,7 +36,7 @@ photo_counters = {}
 # Lock for thread safety
 lock = threading.Lock()
 
-last_frame = None
+camera = None
 
 # Processing GET request image_next
 @app.route('/image_next', methods=['GET'])
@@ -32,7 +44,7 @@ last_frame = None
 def get_next_image():
     global current_image_index
 
-    # Чтение данных из CSV-файла
+    # Reading data from CSV-file
     with open(csv_file_path, mode='r') as csv_file:
         csv_reader = csv.DictReader(csv_file)
         rows = list(csv_reader)
@@ -84,18 +96,12 @@ def submit_text():
             break
 
     if found_row is not None:
-        # Updating the value in the found string
         found_row['text'] = data['text']
 
-        # Writing updated data to a CSV file
         with open(csv_file_path, mode='w', newline='') as csv_file:
             fieldnames = ['id_camera', 'id_img', 'source_img', 'text']
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-
-            # Write down the title
             writer.writeheader()
-
-            # Write the updated rows
             writer.writerows(rows)
 
         return jsonify({"success": True})
@@ -105,36 +111,43 @@ def submit_text():
 @app.route('/camera_detection')
 @cross_origin(supports_credentials=True)
 def index():
-    cameras_info = []
-    # Search all possible cameras with an id from 0 to 9
-    for camera_id in range(10):
-        camera = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
-        if camera.isOpened():
-            # Initialize a counter for each camera if it does not already exist
-            if camera_id not in photo_counters:
-                photo_counters[camera_id] = 0
+    logger.debug("Enumerating available cameras")
 
-            camera_info = {
-                'id_camera': camera_id,
-                'video': f'/video_feed/{camera_id}',
-                'photo': f'/photo/{camera_id}'
-            }
-            cameras_info.append(camera_info)
-            camera.release()
+    ids = getAllCameras()
+    logger.info("Cameras found: " + str(len(ids)))
+
+    cameras_info = []
+    for camera_id in ids:
+        if camera_id not in photo_counters:
+            photo_counters[camera_id] = 0
+
+        camera_info = {
+            'id_camera': camera_id,
+            'video': f'/video_feed/{camera_id}',
+            'photo': f'/photo/{camera_id}'
+        }
+        cameras_info.append(camera_info)
 
     return json.dumps(cameras_info)
 
 @app.route('/video_feed/<int:camera_id>')
 @cross_origin(supports_credentials=True)
 def video_feed(camera_id):
-    return Response(generate_frames(camera_id), mimetype='multipart/x-mixed-replace; boundary=frame')
+    logger.debug("Starting stream from Camera " + str(camera_id))
+
+    global camera
+    camera = Camera(video_source=camera_id)
+    camera.run()
+
+    return Response(generate_frames(camera), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/save_frame/<int:camera_id>', methods=['POST'])
 @cross_origin(supports_credentials=True)
 def save_frame(camera_id):
-    global last_frame
+    global camera
     global photo_counters
-    if last_frame is not None:
+
+    if camera is not None:
         brightness = request.args.get('brightness', default=1.0, type=float)
         contrast = request.args.get('contrast', default=1.0, type=float)
 
@@ -142,31 +155,19 @@ def save_frame(camera_id):
         photo_path = os.path.join(input_folder, photo_name)
         photo_counters[camera_id] += 1
 
-        # Apply brightness and contrast settings to the frame
-        adjusted_frame = cv2.convertScaleAbs(last_frame, alpha=contrast, beta=brightness)
-        cv2.imwrite(photo_path, adjusted_frame)
+        if camera.savePhoto(path=photo_path, contrast=contrast, brightness=brightness):
+            append_to_csv(camera_id, photo_path)
+            return jsonify({'success': True, 'message': 'The frame has been saved successfully.'})
 
-        # Write the data to CSV
-        append_to_csv(camera_id, photo_path)
+    return jsonify({'success': False, 'message': 'Error: unable to save frame as image.'})
 
-        return jsonify({'message': 'The frame has been saved successfully.', 'path': photo_path})
-    else:
-        return jsonify({'message': 'Error: there is no available frame to save.'})
+# Supporting functions
 
-
-def generate_frames(camera_id):
-    global last_frame
-    camera = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
+def generate_frames(camera):
     while True:
-        success, frame = camera.read()
-        last_frame =frame
-        if not success:
-            break
-        else:
-            ret, buffer = cv2.imencode('.jpg', frame)
-            frame = buffer.tobytes()
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        frame = camera.getLastFrame()
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 def append_to_csv(camera_id, photo_path):
     with open(csv_file_path, mode='a', newline='') as csv_file:

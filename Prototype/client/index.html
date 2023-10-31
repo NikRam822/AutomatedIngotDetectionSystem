@@ -18,19 +18,24 @@
     <div class="content">
         <div>
             <div class="sidebar">
-                <h3>Choose a camera:</h3>
-                <select id="cameraSelect" onchange="changeCamera()" style="width: 100%">
-                    <option value="" disabled selected>No camera detected</option>
-                </select>
-
-                <!-- Sliders for adjusting brightness and contrast -->
-                <label for="brightness">Brightness:</label>
-                <input type="range" id="brightness" min="-255" max="255" value="0" step="1"
-                       oninput="updateBrightnessContrast()">
-                <br>
-                <label for="contrast">Contrast:</label>
-                <input type="range" id="contrast" min="0.01" max="3.0" step="0.001" value="1.0"
-                       oninput="updateBrightnessContrast()">
+                <div class="row">
+                    <h3>Camera preview</h3>
+                    <button class="button" id="cameraSetupButton" style="width: 75px;" onclick="toggleCameraSetup()">Setup</button>
+                </div>
+                <div id="cameraSetupPanel" style="display: none;">
+                    <select id="cameraSelect" onchange="changeCamera()" style="width: 100%">
+                        <option value="" disabled selected>No camera detected</option>
+                    </select>
+    
+                    <div class="row">
+                        <label for="brightness">Brightness:</label>
+                        <input type="range" id="brightness" min="0" max="512" value="0" step="1" oninput="updateBrightnessContrast()">
+                    </div>
+                    <div class="row">
+                        <label for="contrast">Contrast:</label>
+                        <input type="range" id="contrast" min="0.01" max="3.0" step="0.001" value="1.0" oninput="updateBrightnessContrast()">
+                    </div>
+                </div>
 
                 <img class="image" id="videoFeed" width="320" height="240">
 
