@@ -1,33 +1,45 @@
 import os
-import sys
+import logging, logging.config
+
 from configparser import ConfigParser
 from csv_generator import generate_csv
+from log_config import logConfig
 
-config_file = "config.ini"
+config_file = 'config.ini'
+input_folder = 'data/input'
+output_folder = 'data/marked'
+csv_file_path = 'data/db/data.csv'
 
-if len(sys.argv) > 1:
-    config_file = sys.argv[1]
+def configureServer():
+    global config_file
 
-filepath = os.path.join(os.getcwd(), "config.ini")
-conf = ConfigParser()
+    filepath = os.path.abspath(config_file)
+    conf = ConfigParser()
 
-# Read the configuration file
-if os.path.exists(filepath):
-    conf.read(filepath, encoding='utf-8')
-else:
-    raise FileNotFoundError(f"Configuration file not found: {filepath}")
+    if os.path.exists(filepath):
+        conf.read(filepath, encoding='utf-8')
+    else:
+        raise FileNotFoundError(f"Configuration file not found: {filepath}")
 
-# Check if 'directories' section is present
-if conf.has_section('directories'):
-    directories = dict(conf.items('directories'))
-else:
-    raise ValueError("Configuration file does not have the 'directories' section.")
+    if conf.has_section('directories'):
+        directories = dict(conf.items('directories'))
+    else:
+        raise ValueError("Configuration file does not have the 'directories' section.")
 
-csv_file_path = os.path.join(directories['database'], 'data.csv')
-input_folder = directories['raw_images']
-output_folder = directories['marked_images']
+    global input_folder
+    global output_folder
+    global csv_file_path
 
-generate_csv(input_folder, csv_file_path)
+    db_folder = os.path.abspath(directories['database'])
+    log_folder = os.path.abspath(directories['logs'])
+    input_folder = os.path.abspath(directories['raw_images'])
+    output_folder = os.path.abspath(directories['marked_images'])
+    csv_file_path = os.path.join(db_folder, 'data.csv')
 
-os.makedirs(directories['database'], exist_ok=True)
-os.makedirs(input_folder, exist_ok=True)
+    os.makedirs(log_folder, exist_ok=True)
+    os.makedirs(db_folder, exist_ok=True)
+    os.makedirs(input_folder, exist_ok=True)
+    os.makedirs(output_folder, exist_ok=True)
+    generate_csv(input_folder, csv_file_path)
+
+    logging.config.dictConfig(logConfig(os.path.join(log_folder, 'logfile.log')))

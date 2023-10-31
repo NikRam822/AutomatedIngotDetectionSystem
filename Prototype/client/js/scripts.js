@@ -1,6 +1,6 @@
 // const server = 'http://217.18.62.231:5000';
 const server = 'http://127.0.0.1:5000';
-const messageTimeout = 3000;
+const messageTimeout = 5000;
 
 // Use localStorage to store currentIdImg
 var currentIdImg = localStorage.getItem('currentIdImg') || '';
@@ -35,6 +35,23 @@ function getAllCameras() {
         .catch(error => console.error('Error:', error));
 }
 
+var isCameraSetupPanelShown = false;
+
+function toggleCameraSetup() {
+    const panel = document.getElementById('cameraSetupPanel');
+    const button = document.getElementById('cameraSetupButton');
+
+    if (isCameraSetupPanelShown) {
+        panel.style = "display: none;";
+        button.textContent = "Setup";
+        isCameraSetupPanelShown = false;
+    } else {
+        panel.style = "display: grid; gap: 20px;";
+        button.textContent = "Apply";
+        isCameraSetupPanelShown = true;
+    }
+}
+
 function changeCamera() {
     const selectedCamera = document.getElementById('cameraSelect').value;
     const videoFeed = document.getElementById('videoFeed');
@@ -65,10 +82,17 @@ function saveFrame() {
         return response.json();
     })
     .then(data => {
-        console.log('Photo successful');
-        $('#success_message_photo').text('Photo successful');
-        setTimeout(function () { $('#success_message_photo').text(''); }, messageTimeout);
-        nextImage(true);
+        var message = data.message
+        if (data.success) {
+            console.log('Photo successful');
+            $('#success_message_photo').text(message);
+            setTimeout(function () { $('#success_message_photo').text(''); }, messageTimeout);
+            nextImage(true);
+        } else {
+            console.log('Photo failed');
+            $('#success_message_photo').text(message);
+            setTimeout(function () { $('#success_message_photo').text(''); }, messageTimeout);
+        }
     })
     .catch(error => {
         console.error('There was an error:', error);
@@ -80,7 +104,6 @@ function nextImage(last) {
     $('#success_message').text('');
     $('#decisionInput').val('');
 
-    // Параметр last
     var queryParam = last ? '?last=true' : '';
 
     $.ajax({
@@ -102,7 +125,7 @@ function nextImage(last) {
 }
 
 function getDecisionsList() {
-    // TODO: Здесь надо запрашивать мапу допустимых значений дефектов
+    // TODO: We need to request available defects values from back-end here
     const decisions = new Map([
         ['OK', ['#0c9', 'OK']], ['DROSS', ['#ff3e41', 'Dross']], ['COLOR', ['#ff3e41', 'Discolorage']], ['EMPTY', ['#36558F', 'No ingot']], ['BAD_IMAGE', ['#36558F', 'Bad image']]
     ]);

@@ -1,18 +1,41 @@
-# About:
-Prototype server application for operator work with images of aluminum details
+# About
+Server application and simple web-client for assessing aluminum ingot defects.
 
-## To start:
-Install Python 3.9
+# Installation
+## Prerequisites
+- Python 3.9
 
-<b>1) Go to folder: aidd/Prototype/server</b> <br>
-<b>2) pip install -r requirements.txt</b> <br>
-<b>3) Run csv_generator.py: python csv_generator.py </b> <br>
-<b>4) Run flask_server.py: <br> waitress-serve --host=0.0.0.0 --port=5000 flask_server:app </b> <br>
-<b>4) Open aidd/Prototype/client/index.html (from Explorer in browser)  </b> <br>
-
-#### About csv:
-
-For the first run, it is necessary to generate a csv file.
+## Prepare to run
+### Windows
+```bash
+cd Prototype/server
+pip install -r requirements.txt
+```
+### Linux/MacOS
+```bash
+cd Prototype/server
+python3 -m venv .venv
+source .venv/bin/activate   # only once in new terminal session
+pip3 install -r requirements.txt
+```
+## Run
+### Windows
+```bash
+cd Prototype/server
+python flask_server.py
+```
+And then open `../client/index.html` in browser from the Explore.
+### Linux/MacOS
+```bash
+cd Prototype/server
+source .venv/bin/activate   # only once in new terminal session
+python flask_server.py
+open ../client/index.html   # in another terminal session
+```
+# Configuration
+The server configuration is placed in the `config.ini` file inside the `server` directory.
+Currently it contains only paths to the database, logs, and images. You are free to use relative or absolute paths for those directories, but be sure that the user who runs the server will have access to the specified directories. Otherwise the server will fail to run.
+# Database
 Csv file is a simulation of a database for storing server data.
 The file is generated on the basis of images in the output folder (now there are images for demo). 
 
@@ -24,19 +47,10 @@ There are 4 columns in this file:
 2) id_img - generated image id
 3) source_img - absolute path to the image files from aidd/Prototype/client/output
 4) text - operator's verdict in text form
-
-
-# For Developers
-To update pip packages:
-
-1) Install target packages
-2) Go to folder: aidd/Prototype
-3) ```pip freeze > requirements.txt```
-4) Push
-
-## Start the server in dev mode
-1) Go to folder: aidd/Prototype/server
-2) ```pip install -r requirements.txt```
-3) Run csv_generator.py: ```python csv_generator.py``` 
-4) Run flask_server.py: ```flask --app flask_server run``` (Unscramble the strings to run)
-5) Open client/index.html (from Explorer in browser)
+# Development
+To update pip packages after installing them to the local development environment, run the following commands:
+```bash
+cd Prototype/server
+pip freeze > requirements.txt
+```
+Then don't forget to make a Merge Request with your changes :)
