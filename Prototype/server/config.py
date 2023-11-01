@@ -1,9 +1,10 @@
 import os
-import logging, logging.config
+import logging
+import logging.config
 
 from configparser import ConfigParser
 from csv_generator import generate_csv
-from log_config import logConfig
+from log_config import log_config
 
 config_file = 'config.ini'
 input_folder = 'data/input'
@@ -42,4 +43,4 @@ def configureServer():
     os.makedirs(output_folder, exist_ok=True)
     generate_csv(input_folder, csv_file_path)
 
-    logging.config.dictConfig(logConfig(os.path.join(log_folder, 'logfile.log')))
+    logging.config.dictConfig(log_config(os.path.join(log_folder, 'logfile.log')))

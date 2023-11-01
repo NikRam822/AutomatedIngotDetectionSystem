@@ -1,0 +1,8 @@
+linter-job:
+  stage: Static Analysis
+
+  script:
+    - echo "Running linter..."
+    - pylint --load-plugins pylint_flask Prototype/server/*.py
+
+  allow_failure: true

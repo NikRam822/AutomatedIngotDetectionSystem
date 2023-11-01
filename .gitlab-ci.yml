@@ -1,0 +1,21 @@
+image: "python:3.9-slim"
+
+cache:
+  paths:
+    - deps_cache
+    - venv/
+
+before_script:
+  - python --version
+  - python -m venv .venv
+  - source .venv/bin/activate
+  - pip install -r Prototype/server/requirements.txt --cache-dir deps_cache
+  - pip install -r Prototype/server/requirements-dev.txt --cache-dir deps_cache
+
+include:
+  - local: '.lint-ci.yml'
+  - local: '.tests-ci.yml'
+
+stages:
+  - Static Analysis
+  - Verification
