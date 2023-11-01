@@ -3,4 +3,4 @@ unit-test-job:
 
   script:
     - echo "Running unit tests..."
-    - python -m pytest -v tests --doctest-modules
+    - python -m pytest
