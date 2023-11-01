@@ -43,10 +43,10 @@ The file looks as follows:
 ![img.png](Documentation/images/img.png)
 
 There are 4 columns in this file:
-1) id_camera - Camera from which the image was received (so far, always 1, because there is only one camera)
-2) id_img - generated image id
-3) source_img - absolute path to the image files from aidd/Prototype/client/output
-4) text - operator's verdict in text form
+1. id_camera - Camera from which the image was received (so far, always 1, because there is only one camera)
+2. id_img - generated image id
+3. source_img - absolute path to the image files from aidd/Prototype/client/output
+4. text - operator's verdict in text form
 # Development
 To update pip packages after installing them to the local development environment, run the following commands:
 ```bash
@@ -54,3 +54,23 @@ cd Prototype/server
 pip freeze > requirements.txt
 ```
 Then don't forget to make a Merge Request with your changes :)
+## Start the server in dev mode
+```bash
+cd Prototype/server
+source .venv/bin/activate   # (Linux/macOS) run only once in new terminal session
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+flask --app flask_server run
+open ../client/index.html
+```
+# CI/CD
+## Prerequisites
+Install `pylint` and `pylint-flask`:
+```bash
+pip install pylint
+pip install pylint_flask
+```
+## Run Flask lint
+```bash
+pylint --load-plugins pylint_flask Prototype/server/*.py
+```

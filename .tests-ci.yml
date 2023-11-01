@@ -1,0 +1,6 @@
+unit-test-job:
+  stage: Verification
+
+  script:
+    - echo "Running unit tests..."
+    - python -m pytest -v tests --doctest-modules

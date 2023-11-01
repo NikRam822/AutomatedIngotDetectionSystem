@@ -1,3 +1,8 @@
+"""
+The CSV generator module.
+It will be converted to the Database module in the near future.
+"""
+
 import os
 import csv
 
@@ -6,7 +11,7 @@ def generate_csv(image_folder, csv_file_path):
     image_files = [f for f in os.listdir(image_folder) if f.endswith(('.jpg', '.jpeg', '.png'))]
 
     # Create CSV file
-    with open(csv_file_path, mode='w', newline='') as csv_file:
+    with open(csv_file_path, mode='w', newline='', encoding="utf-8") as csv_file:
         fieldnames = ['id_camera', 'id_img', 'source_img', 'text']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
 

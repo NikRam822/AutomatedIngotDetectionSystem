@@ -2,7 +2,7 @@ from flask import Flask, Response, request, jsonify
 from flask_cors import CORS, cross_origin
 # from waitress import serve
 
-from camera import Camera, getAllCameras
+from camera import Camera, get_all_cameras
 from config import configureServer
 
 import csv
@@ -113,7 +113,7 @@ def submit_text():
 def index():
     logger.debug("Enumerating available cameras")
 
-    ids = getAllCameras()
+    ids = get_all_cameras()
     logger.info("Cameras found: " + str(len(ids)))
 
     cameras_info = []
@@ -155,7 +155,7 @@ def save_frame(camera_id):
         photo_path = os.path.join(input_folder, photo_name)
         photo_counters[camera_id] += 1
 
-        if camera.savePhoto(path=photo_path, contrast=contrast, brightness=brightness):
+        if camera.save_photo(path=photo_path, contrast=contrast, brightness=brightness):
             append_to_csv(camera_id, photo_path)
             return jsonify({'success': True, 'message': 'The frame has been saved successfully.'})
 
