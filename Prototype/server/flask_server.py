@@ -1,9 +1,8 @@
 from flask import Flask, Response, request, jsonify
 from flask_cors import CORS, cross_origin
-# from waitress import serve
+from waitress import serve
 
 from camera import Camera, get_all_cameras
-from config import configureServer
 
 import csv
 import json
@@ -11,15 +10,10 @@ import logging
 import os
 import threading
 
-configureServer()
-logger = logging.getLogger(__name__)
+import core
 
-from config import csv_file_path, input_folder, output_folder
-
-logger.info("Folders:")
-logger.info("  Database: " + csv_file_path)
-logger.info("  Input:    " + input_folder)
-logger.info("  Output:   " + output_folder)
+CORE = core.Core(should_collect_events=True)
+LOGGER = logging.getLogger('__main__')
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True, origins=['*', 'null'])
@@ -38,6 +32,21 @@ lock = threading.Lock()
 
 camera = None
 
+@app.route('/event', methods=['POST'])
+@cross_origin(supports_credentials=True)
+def save_event():
+    event = request.get_json(cache=False)
+    if CORE.log_event(event):
+        return jsonify({})
+    return jsonify({}), 400
+
+@app.route('/experiments', methods=['GET'])
+@cross_origin(supports_credentials=True)
+def get_experiments():
+    experiments = CORE.config.experiments
+    LOGGER.info(f"Enabled experiments: {experiments}")
+    return jsonify(experiments)
+
 # Processing GET request image_next
 @app.route('/image_next', methods=['GET'])
 @cross_origin(supports_credentials=True)
@@ -45,7 +54,7 @@ def get_next_image():
     global current_image_index
 
     # Reading data from CSV-file
-    with open(csv_file_path, mode='r') as csv_file:
+    with open(CORE.config.csv_file_path, mode='r') as csv_file:
         csv_reader = csv.DictReader(csv_file)
         rows = list(csv_reader)
 
@@ -84,7 +93,7 @@ def submit_text():
         return jsonify({"error": "Missing 'id' or 'text' in the request"}), 400
 
     # Reading data from CSV file
-    with open(csv_file_path, mode='r') as csv_file:
+    with open(CORE.config.csv_file_path, mode='r') as csv_file:
         csv_reader = csv.DictReader(csv_file)
         rows = list(csv_reader)
 
@@ -98,7 +107,7 @@ def submit_text():
     if found_row is not None:
         found_row['text'] = data['text']
 
-        with open(csv_file_path, mode='w', newline='') as csv_file:
+        with open(CORE.config.csv_file_path, mode='w', newline='') as csv_file:
             fieldnames = ['id_camera', 'id_img', 'source_img', 'text']
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             writer.writeheader()
@@ -111,10 +120,10 @@ def submit_text():
 @app.route('/camera_detection')
 @cross_origin(supports_credentials=True)
 def index():
-    logger.debug("Enumerating available cameras")
+    LOGGER.debug("Enumerating available cameras")
 
     ids = get_all_cameras()
-    logger.info("Cameras found: " + str(len(ids)))
+    LOGGER.info("Cameras found: " + str(len(ids)))
 
     cameras_info = []
     for camera_id in ids:
@@ -133,7 +142,7 @@ def index():
 @app.route('/video_feed/<int:camera_id>')
 @cross_origin(supports_credentials=True)
 def video_feed(camera_id):
-    logger.debug("Starting stream from Camera " + str(camera_id))
+    LOGGER.debug("Starting stream from Camera " + str(camera_id))
 
     global camera
     camera = Camera(video_source=camera_id)
@@ -152,7 +161,7 @@ def save_frame(camera_id):
         contrast = request.args.get('contrast', default=1.0, type=float)
 
         photo_name = f'photo_camera_{camera_id}_{photo_counters[camera_id]}.jpg'
-        photo_path = os.path.join(input_folder, photo_name)
+        photo_path = os.path.join(CORE.config.input_folder, photo_name)
         photo_counters[camera_id] += 1
 
         if camera.save_photo(path=photo_path, contrast=contrast, brightness=brightness):
@@ -165,17 +174,17 @@ def save_frame(camera_id):
 
 def generate_frames(camera):
     while True:
-        frame = camera.getLastFrame()
+        frame = camera.get_last_frame()
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 def append_to_csv(camera_id, photo_path):
-    with open(csv_file_path, mode='a', newline='') as csv_file:
+    with open(CORE.config.csv_file_path, mode='a', newline='') as csv_file:
         fieldnames = ['id_camera', 'id_img', 'source_img', 'text']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
 
         # Get the current value of id_img
-        with open(csv_file_path, mode='r') as csv_file_read:
+        with open(CORE.config.csv_file_path, mode='r') as csv_file_read:
             reader = csv.DictReader(csv_file_read)
             rows = list(reader)
             if not rows:

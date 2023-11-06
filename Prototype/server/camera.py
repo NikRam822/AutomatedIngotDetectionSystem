@@ -7,7 +7,6 @@ import threading
 import time
 import logging
 
-LOGGER = logging.getLogger(__name__)
 THREAD = None
 
 """
@@ -15,7 +14,9 @@ It's a class that incapsulate all ther camera work.
 """
 class Camera:
     def __init__(self, fps=20, video_source=0):
-        LOGGER.info(f"Initializing camera class with {fps} fps and video_source={video_source}")
+        self.logger = logging.getLogger(__name__)
+        self.logger.info(f"Initializing camera class with {fps} fps and video_source={video_source}")
+
         self.fps = fps
         self.video_source = video_source
         self.camera = cv2.VideoCapture(video_source)
@@ -37,14 +38,14 @@ class Camera:
         if THREAD is None:
             logging.debug("Creating thread")
             THREAD = threading.Thread(target=self._capture_loop, daemon=True)
-            LOGGER.debug("Starting thread")
+            self.logger.debug("Starting thread")
             self.is_running = True
             THREAD.start()
-            LOGGER.info("Thread started")
+            self.logger.info("Thread started")
 
     def _capture_loop(self):
         dt = 1 / self.fps
-        LOGGER.debug("Observation started")
+        self.logger.debug("Observation started")
         while self.is_running:
             is_read, im = self.camera.read()
             if is_read:
@@ -52,10 +53,10 @@ class Camera:
                     self.frames = self.frames[1:]
                 self.frames.append(im)
             time.sleep(dt)
-        LOGGER.info("Thread stopped successfully")
+        self.logger.info("Thread stopped successfully")
 
     def stop(self):
-        LOGGER.debug("Stopping thread")
+        self.logger.debug("Stopping thread")
         self.is_running = False
 
     def get_last_frame(self, _bytes=True):
@@ -71,17 +72,17 @@ class Camera:
 
     def save_photo(self, path, contrast, brightness):
         if len(self.frames) == 0:
-            LOGGER.error("No frames captured from camera yet")
+            self.logger.error("No frames captured from camera yet")
             return False
 
-        LOGGER.debug("Saving photo to " + path)
+        self.logger.debug("Saving photo to " + path)
         adjustedFrame = cv2.convertScaleAbs(self.frames[-1], alpha=contrast, beta=brightness)
         isEncoded, encodedData = cv2.imencode('.jpg', adjustedFrame)
         if isEncoded and len(encodedData) > 0:
             encodedData.tofile(path)
             return True
 
-        LOGGER.error("Photo is not saved to " + path)
+        self.logger.error("Photo is not saved to " + path)
         return False
 
 
