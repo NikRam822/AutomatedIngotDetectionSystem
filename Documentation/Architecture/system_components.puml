@@ -1,0 +1,70 @@
+@startuml "AIDD Components"
+
+interface "API" as api
+
+package "Client" {
+    component "UI" as client_ui
+    component "Logic" as client_logic
+
+    client_ui <-left-> client_logic
+    client_logic ..right..> api: Use
+}
+
+
+package "Server" {
+    component "Router" as router
+    component "Core" as core
+    component "Image Processor" as proc
+    component "Image Analizer" as analizer
+
+    component "Database" as db {
+        file "data.csv" as csv
+    }
+
+    component "Configurator" as config {
+        file "config.ini"
+    }
+
+    component "Logger" as logger {
+        file "logfile.log"
+    }
+
+    component "Events\nCollector" as events {
+        file "events.csv"
+    }
+
+    interface "Init" as init
+    interface "Log" as log
+
+    init -down-> config
+
+    router <-up- api
+    router <-right-> core
+
+    config ..up..> core: Setup
+    config ..up..> db: Setup
+    config ..right..> logger: Setup
+
+    core -down-> db: Save
+    core -down-> events: Collect
+    core -right-> proc
+    proc -down-> analizer
+    analizer -up-> core
+
+    log -down-> logger
+}
+
+component "External\nDefects\nAnalizer" as ai {
+    analizer <-down-> ai: Use
+}
+
+package "Devices" {
+    component "Camera" as camera
+
+    file "Cam 1" as cam1
+
+    camera <--> cam1
+    core <-right-> camera
+}
+
+@enduml

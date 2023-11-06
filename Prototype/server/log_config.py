@@ -36,5 +36,20 @@ def log_config(filename):
             'level': 'DEBUG',
             'propagate': False,
         },
+        'config': {
+            'handlers': ['default', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'core': {
+            'handlers': ['default', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'events': {
+            'handlers': ['default', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     }
 }

@@ -4,17 +4,66 @@ const messageTimeout = 5000;
 
 // Use localStorage to store currentIdImg
 var currentIdImg = localStorage.getItem('currentIdImg') || '';
+var experiments = [];
+
+// TODO: We need to request available defects values from back-end here
+const decisions = new Map([
+    ['OK', ['#0c9', 'OK']], ['DROSS', ['#ff3e41', 'Dross']], ['COLOR', ['#ff3e41', 'Discolorage']], ['EMPTY', ['#36558F', 'No ingot']], ['BAD_IMAGE', ['#36558F', 'Bad image']]
+]);
 
 function showId(id) {
     $('#ingotId').text(id);
 }
 
 function initialize() {
+    getExperiments()
     getAllCameras();
     getDecisionsList();
+    registerListeners();
+}
+
+function sendEvent(name, attributes = null) {
+    $.ajax({
+        url: server + '/event',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ 'name': name, 'attributes': attributes })
+    });
+}
+
+function registerListeners() {
+    document.getElementById('brightness').addEventListener('input', updateBrightnessContrast);
+    document.getElementById('contrast').addEventListener('input', updateBrightnessContrast);
+}
+
+function applyExperiments(values) {
+    experiments = values;
+    console.log("Enabled experiments: " + experiments);
+    toggleHotkeys(experiments.includes('use_hotkeys'))
+}
+
+function toggleHotkeys(is_enabled) {
+    var els = document.getElementsByClassName('hotkeyHint');
+    var style = "display: none;";
+    if (is_enabled) {
+        document.addEventListener('keyup', doc_keyUp, false);
+        style = "";
+    }
+    Array.prototype.forEach.call(els, function(el) {
+        el.style = style;
+    });
+}
+
+function getExperiments() {
+    fetch(server + '/experiments')
+        .then(response => response.json())
+        .then(values => applyExperiments(values))
+        .catch(error => console.error('Error:', error));
 }
 
 function getAllCameras() {
+    sendEvent('get_camera_list')
+
     fetch(server + '/camera_detection')
         .then(response => response.json())
         .then(cameras => {
@@ -50,11 +99,15 @@ function toggleCameraSetup() {
         button.textContent = "Apply";
         isCameraSetupPanelShown = true;
     }
+
+    sendEvent('toggle_setup_panel', {'is_shown': isCameraSetupPanelShown})
 }
 
 function changeCamera() {
     const selectedCamera = document.getElementById('cameraSelect').value;
     const videoFeed = document.getElementById('videoFeed');
+
+    sendEvent('change_camera', {'camera': selectedCamera})
 
     if (selectedCamera != '') {
         document.getElementById('captureButton').disabled = false;
@@ -64,6 +117,8 @@ function changeCamera() {
 }
 
 function saveFrame() {
+    sendEvent('save_frame')
+
     $('#success_message_photo').text('');
     const selectedCamera = document.getElementById('cameraSelect').value;
     const brightness = document.getElementById('brightness').value;
@@ -71,9 +126,7 @@ function saveFrame() {
 
     fetch(server + `/save_frame/${selectedCamera}?brightness=${brightness}&contrast=${contrast}`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: { 'Content-Type': 'application/json' }
     })
     .then(response => {
         if (!response.ok) {
@@ -99,8 +152,9 @@ function saveFrame() {
     });
 }
 
-
 function nextImage(last) {
+    sendEvent('get_next_image')
+
     $('#success_message').text('');
     $('#decisionInput').val('');
 
@@ -125,10 +179,8 @@ function nextImage(last) {
 }
 
 function getDecisionsList() {
-    // TODO: We need to request available defects values from back-end here
-    const decisions = new Map([
-        ['OK', ['#0c9', 'OK']], ['DROSS', ['#ff3e41', 'Dross']], ['COLOR', ['#ff3e41', 'Discolorage']], ['EMPTY', ['#36558F', 'No ingot']], ['BAD_IMAGE', ['#36558F', 'Bad image']]
-    ]);
+    sendEvent('get_decisions_list')
+
     const select = document.getElementById('decisionPanel');
     decisions.forEach((value, key) => {
         const label = document.createTextNode(value[1]);
@@ -142,6 +194,8 @@ function getDecisionsList() {
 }
 
 function submitMark(key) {
+    sendEvent('submit_mark', {'mark': key})
+
     $.ajax({
         url: server + '/submit',
         type: 'POST',
@@ -161,16 +215,33 @@ function submitMark(key) {
     });
 }
 
+function doc_keyUp(event) {
+    switch (event.key) {
+        case ' ':
+            saveFrame();
+            break;
+
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+            submitMark(Array.from(decisions.keys())[event.key - '1']);
+            break;
+
+        default:
+            console.log('Key pressed: ' + event.key);
+            break;
+    } 
+}
+
 // Function to update brightness and contrast
 function updateBrightnessContrast() {
     const brightness = document.getElementById('brightness').value;
     const contrast = document.getElementById('contrast').value;
     const videoFeed = document.getElementById('videoFeed');
 
+    sendEvent('adjust_camera', {'brightness': brightness, 'contrast': contrast})
+
     videoFeed.style.filter = `brightness(${parseInt(brightness)}%) contrast(${parseFloat(contrast)})`;
 }
-
-// Call the updateBrightnessContrast function when sliders are moved
-document.getElementById('brightness').addEventListener('input', updateBrightnessContrast);
-document.getElementById('contrast').addEventListener('input', updateBrightnessContrast);
-
