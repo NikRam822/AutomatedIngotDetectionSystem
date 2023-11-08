@@ -26,11 +26,6 @@ def log_config(filename):
         },
     },
     'loggers': {
-        '__main__': {
-            'handlers': ['default','file'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
         'camera': {
             'handlers': ['default', 'file'],
             'level': 'DEBUG',
@@ -42,6 +37,11 @@ def log_config(filename):
             'propagate': False,
         },
         'core': {
+            'handlers': ['default', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'database': {
             'handlers': ['default', 'file'],
             'level': 'DEBUG',
             'propagate': False,

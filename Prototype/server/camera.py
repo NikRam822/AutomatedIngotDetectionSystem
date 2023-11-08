@@ -84,13 +84,3 @@ class Camera:
 
         self.logger.error("Photo is not saved to " + path)
         return False
-
-
-def get_all_cameras():
-    cameras_id = []
-    for camera_id in range(10):
-        camera = Camera(fps=1, video_source=camera_id)
-        if camera.is_available():
-            cameras_id.append(camera_id)
-
-    return cameras_id

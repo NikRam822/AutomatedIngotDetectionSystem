@@ -3,11 +3,8 @@ import os.path
 import cv2
 import numpy as np
 import utlis
-import core
 
-CORE = core.Core(should_collect_events=True)
-def image_processing(pathImage):
-    saveDir = CORE.config.output_folder
+def image_processing(pathImage, saveDir):
     imageName = os.path.basename(pathImage)
     img = cv2.imread(pathImage)
     heightImg, widthImg, _ = img.shape
@@ -53,21 +50,21 @@ def image_processing(pathImage):
                 imgAdaptiveThre = cv2.bitwise_not(imgAdaptiveThre)
                 imgAdaptiveThre = cv2.medianBlur(imgAdaptiveThre, 3)
 
-                cv2.imwrite(saveDir + "/success_"+imageName, imgWarpColored)
+                cv2.imwrite(saveDir + "/"+imageName, imgWarpColored)
                 print("Image Saved")
                 return True
             else:
-                cv2.imwrite(saveDir + "/failed_"+imageName, img)
+                cv2.imwrite(saveDir + "/"+imageName, img)
                 print("Blank images")
                 return False
 
         except Exception:
-                cv2.imwrite(saveDir + "/failed_" + imageName, img)
+                cv2.imwrite(saveDir + "/" + imageName, img)
                 print("Error during contour processing")
                 return False
 
     except Exception:
-            cv2.imwrite(saveDir + "/failed_" + imageName, img)
+            cv2.imwrite(saveDir + "/" + imageName, img)
             print("Error in image_processing function")
             return False
 

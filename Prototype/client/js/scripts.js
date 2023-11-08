@@ -156,7 +156,6 @@ function saveFrame() {
 function nextImage(last) {
     sendEvent('get_next_image')
 
-    $('#success_message').text('');
     $('#decisionInput').val('');
 
     var queryParam = last ? '?last=true' : '';
@@ -171,10 +170,13 @@ function nextImage(last) {
             currentIdImg = data.id;
             localStorage.setItem('currentIdImg', currentIdImg);
             $('#displayed_image').attr('src', data.source);
-            $('#ingotId').text('Ingot ID: ' + currentIdImg);
+            $('#ingotId').text(currentIdImg);
         },
         error: function (error) {
-            console.log(error.responseText);
+            currentIdImg = 0;
+            localStorage.setItem('currentIdImg', currentIdImg);
+            $('#displayed_image').attr('src', "");
+            $('#ingotId').text('No ingot');
         }
     });
 }
@@ -194,8 +196,8 @@ function getDecisionsList() {
     });
 }
 
-function submitMark(key) {
-    sendEvent('submit_mark', {'mark': key})
+function submitMark(key, is_hotkey = false) {
+    sendEvent('submit_mark', {'mark': key, 'hotkey': is_hotkey})
 
     $.ajax({
         url: server + '/submit',
@@ -209,6 +211,7 @@ function submitMark(key) {
             console.log('Submit successful');
             $('#success_message').text('Submit successful');
             setTimeout(function () { $('#success_message').text(''); }, messageTimeout);
+            nextImage()
         },
         error: function (error) {
             console.log(error.responseText);
@@ -222,12 +225,8 @@ function doc_keyUp(event) {
             saveFrame();
             break;
 
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-            submitMark(Array.from(decisions.keys())[event.key - '1']);
+        case '1', '2', '3', '4', '5':
+            submitMark(Array.from(decisions.keys())[event.key - '1'], true);
             break;
 
         default:

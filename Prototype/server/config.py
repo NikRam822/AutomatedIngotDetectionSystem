@@ -1,12 +1,14 @@
 import os
-from csv_generator import generate_csv
 from configparser import ConfigParser
 
 class Config:
     def __init__(self, filepath):
         self.config_file = filepath
+        self.db_folder = 'data/db'
+        self.log_folder = 'data/logs'
         self.input_folder = 'data/input'
         self.output_folder = 'data/marked'
+        self.events_folder = 'data/events'
         self.csv_file_path = 'data/db/data.csv'
         self.experiments = []
 
@@ -32,6 +34,7 @@ class Config:
         self.log_folder = os.path.abspath(directories['logs'])
         self.input_folder = os.path.abspath(directories['raw_images'])
         self.output_folder = os.path.abspath(directories['marked_images'])
+        self.events_folder = os.path.abspath(directories['events'])
         self.csv_file_path = os.path.join(self.db_folder, 'data.csv')
 
     def _read_experiments(self, conf):
