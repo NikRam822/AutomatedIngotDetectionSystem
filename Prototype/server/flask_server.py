@@ -28,6 +28,11 @@ def save_event():
 def get_experiments():
     return jsonify(CORE.config.experiments)
 
+@app.route('/decisions', methods=['GET'])
+@cross_origin(supports_credentials=True)
+def get_decisions():
+    return jsonify(CORE.get_all_decisions())
+
 @app.route('/image_next', methods=['GET'])
 @cross_origin(supports_credentials=True)
 def get_next_image():

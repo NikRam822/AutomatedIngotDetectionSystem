@@ -4,6 +4,8 @@ import cv2
 import numpy as np
 import utlis
 
+from decision import Decisions
+
 def image_processing(pathImage, saveDir):
     imageName = os.path.basename(pathImage)
     img = cv2.imread(pathImage)
@@ -52,19 +54,20 @@ def image_processing(pathImage, saveDir):
 
                 cv2.imwrite(saveDir + "/"+imageName, imgWarpColored)
                 print("Image Saved")
-                return True
+                return Decisions.ok
+
             else:
                 cv2.imwrite(saveDir + "/"+imageName, img)
                 print("Blank images")
-                return False
+                return Decisions.no_ingot
 
         except Exception:
                 cv2.imwrite(saveDir + "/" + imageName, img)
                 print("Error during contour processing")
-                return False
+                return Decisions.bad_image
 
     except Exception:
             cv2.imwrite(saveDir + "/" + imageName, img)
             print("Error in image_processing function")
-            return False
+            return Decisions.bad_image
 

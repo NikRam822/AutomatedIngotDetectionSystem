@@ -5,11 +5,7 @@ const messageTimeout = 5000;
 // Use localStorage to store currentIdImg
 var currentIdImg = localStorage.getItem('currentIdImg') || '';
 var experiments = [];
-
-// TODO: We need to request available defects values from back-end here
-const decisions = new Map([
-    ['OK', ['#0c9', 'OK']], ['DROSS', ['#ff3e41', 'Dross']], ['COLOR', ['#ff3e41', 'Discolorage']], ['EMPTY', ['#36558F', 'No ingot']], ['BAD_IMAGE', ['#36558F', 'Bad image']]
-]);
+var decisions = [];
 
 function showId(id) {
     $('#ingotId').text(id);
@@ -59,6 +55,33 @@ function getExperiments() {
         .then(response => response.json())
         .then(values => applyExperiments(values))
         .catch(error => console.error('Error:', error));
+}
+
+function getDecisionsList() {
+    sendEvent('get_decisions_list')
+
+    const select = document.getElementById('decision_panel');
+    fetch(server + '/decisions')
+        .then(response => response.json())
+        .then(values => {
+            decisions = values;
+            decisions.forEach(value => {
+                const label = document.createTextNode(value['label']);
+                const option = document.createElement('button');
+                option.className = 'decision_' + value['type'].toLowerCase();
+                option.disabled = true;
+                option.onclick = () => { submitMark(value['key']); };
+                option.appendChild(label);
+                select.appendChild(option);
+            })
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+function disableDecisions(disabled) {
+    $.each($('[class^="decision_"]'), function(index, element) {
+        element.disabled = disabled;
+    });
 }
 
 function getAllCameras() {
@@ -135,33 +158,32 @@ function saveFrame() {
         return response.json();
     })
     .then(data => {
+        disableDecisions(true)
         var message = data.message
         if (data.success) {
             console.log('Photo successful');
             $('#success_message_photo').text(message);
             setTimeout(function () { $('#success_message_photo').text(''); }, messageTimeout);
-            nextImage(true);
         } else {
             console.log('Photo failed');
             $('#success_message_photo').text(message);
             setTimeout(function () { $('#success_message_photo').text(''); }, messageTimeout);
-            nextImage(true)
         }
+        nextImage()
     })
     .catch(error => {
         console.error('There was an error:', error);
     });
 }
 
-function nextImage(last) {
+function nextImage() {
     sendEvent('get_next_image')
 
     $('#decisionInput').val('');
-
-    var queryParam = last ? '?last=true' : '';
+    $('#prediction').text('');
 
     $.ajax({
-        url: server + '/image_next' + queryParam,
+        url: server + '/image_next',
         type: 'GET',
         xhrFields: {
             withCredentials: true
@@ -171,33 +193,23 @@ function nextImage(last) {
             localStorage.setItem('currentIdImg', currentIdImg);
             $('#displayed_image').attr('src', data.source);
             $('#ingotId').text(currentIdImg);
+            $('#prediction').text(data.decision);
+            disableDecisions(false)
         },
         error: function (error) {
             currentIdImg = 0;
             localStorage.setItem('currentIdImg', currentIdImg);
-            $('#displayed_image').attr('src', "");
+            $('#displayed_image').attr('src', "images/not_found.jpg");
             $('#ingotId').text('No ingot');
+            disableDecisions(true)
         }
-    });
-}
-
-function getDecisionsList() {
-    sendEvent('get_decisions_list')
-
-    const select = document.getElementById('decisionPanel');
-    decisions.forEach((value, key) => {
-        const label = document.createTextNode(value[1]);
-        const option = document.createElement('button');
-        option.className = 'decision';
-        option.style = 'background-color: ' + value[0] + ';';
-        option.onclick = () => { submitMark(key); };
-        option.appendChild(label);
-        select.appendChild(option);
     });
 }
 
 function submitMark(key, is_hotkey = false) {
     sendEvent('submit_mark', {'mark': key, 'hotkey': is_hotkey})
+
+    disableDecisions(true)
 
     $.ajax({
         url: server + '/submit',
@@ -215,22 +227,29 @@ function submitMark(key, is_hotkey = false) {
         },
         error: function (error) {
             console.log(error.responseText);
+            disableDecisions(false)
         }
     });
 }
 
 function doc_keyUp(event) {
+    console.log('Key pressed: ' + event.key);
     switch (event.key) {
         case ' ':
             saveFrame();
             break;
 
-        case '1', '2', '3', '4', '5':
-            submitMark(Array.from(decisions.keys())[event.key - '1'], true);
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+            const decision = decisions[event.key - '1'];
+            console.log('Decision is ' + decision['label']);
+            submitMark(decision['key'], true);
             break;
 
         default:
-            console.log('Key pressed: ' + event.key);
             break;
     } 
 }
