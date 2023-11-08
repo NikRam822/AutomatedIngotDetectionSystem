@@ -15,9 +15,14 @@ import logging
 import logging.config
 from log_config import log_config
 
-import img_process_func
+from decision import Decisions
+from img_process_func import image_processing
+from image_analysis import classify_image
 
 class Core:
+
+    decisions = [ Decisions.ok, Decisions.dross, Decisions.color, Decisions.no_ingot, Decisions.bad_image ]
+
     def __init__(self):
         self.config = Config('config.ini')
         logging.config.dictConfig(log_config(os.path.join(self.config.log_folder, 'logfile.log')))
@@ -44,6 +49,13 @@ class Core:
             return False
         self.event_collector.save_event(event['name'], event['attributes'])
         return True
+    
+    def get_all_decisions(self):
+        self.logger.debug("Enumerating available decisions")
+        result = []
+        for value in Core.decisions:
+            result.append({'key': value.key, 'type': value.type, 'label': value.label})
+        return result
     
     def get_all_cameras(self):
         self.logger.debug("Enumerating available cameras")
@@ -80,10 +92,18 @@ class Core:
     def next_unmarked_image(self):
         self.logger.debug("Getting next unmarked image...")
         row = self.database.next_unmarked()
-        if row is not None:
-            photo_path = os.path.join(self.config.output_folder, row.image_name)
-            return {'id': row.image_id, 'source': photo_path}
-        return None
+        if row is None:
+            return None
+        photo_path = os.path.join(self.config.output_folder, row.image_name)
+        if row.final_mark != '':
+            decision = self._decision_description(row.final_mark, 'User')
+        elif row.ml_mark != '':
+            decision = self._decision_description(row.ml_mark, 'AI')
+        elif row.pre_mark != '':
+            decision = self._decision_description(row.pre_mark, 'Processing')
+        else:
+            decision = ''
+        return {'id': row.image_id, 'source': photo_path, 'decision': decision}
 
     def save_frame(self, camera_id, brightness, contrast):
         self.logger.debug("Trying to take a picture...")
@@ -97,12 +117,24 @@ class Core:
         if not camera.save_photo(path=photo_path, contrast=contrast, brightness=brightness):
             return False
 
-        pre_mark = 'OK'
-        if not img_process_func.image_processing(photo_path, self.config.output_folder):
-            pre_mark = 'EMPTY'
-        self.database.append_to_db(ingot_id=0, camera_id=camera_id, photo_name=photo_name, pre_mark=pre_mark)
+        pre_mark = image_processing(photo_path, self.config.output_folder).key
+        ml_mark = ''
+        if pre_mark == Decisions.ok.key:
+            ml_mark = classify_image(photo_path).key
+
+        self.database.append_to_db(ingot_id=0, camera_id=camera_id, photo_name=photo_name, pre_mark=pre_mark, ml_mark=ml_mark)
         return True
 
     def submit_mark(self, image_id, mark):
         self.logger.debug(f"Submitting decision for {image_id}: {mark}")
         return self.database.update_mark(img_id=image_id, final_mark=mark)
+
+    def _decision_description(self, decision, source):
+        if source == 'User':
+            prefix = 'Decision: '
+        else:
+            prefix = 'Prediction: '
+        for val in Core.decisions:
+            if val.key == decision:
+                return prefix + val.label
+        return "";
