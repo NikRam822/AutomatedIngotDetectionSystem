@@ -145,6 +145,7 @@ function saveFrame() {
             console.log('Photo failed');
             $('#success_message_photo').text(message);
             setTimeout(function () { $('#success_message_photo').text(''); }, messageTimeout);
+            nextImage(true)
         }
     })
     .catch(error => {

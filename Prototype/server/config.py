@@ -1,5 +1,5 @@
 import os
-
+from csv_generator import generate_csv
 from configparser import ConfigParser
 
 class Config:

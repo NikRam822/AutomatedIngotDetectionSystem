@@ -9,7 +9,7 @@ import json
 import logging
 import os
 import threading
-
+import img_process_func
 import core
 
 CORE = core.Core(should_collect_events=True)
@@ -47,7 +47,6 @@ def get_experiments():
     LOGGER.info(f"Enabled experiments: {experiments}")
     return jsonify(experiments)
 
-# Processing GET request image_next
 @app.route('/image_next', methods=['GET'])
 @cross_origin(supports_credentials=True)
 def get_next_image():
@@ -165,10 +164,14 @@ def save_frame(camera_id):
         photo_counters[camera_id] += 1
 
         if camera.save_photo(path=photo_path, contrast=contrast, brightness=brightness):
-            append_to_csv(camera_id, photo_path)
+            #if not image_processing("../data/input/test.jpg"):
+            if not img_process_func.image_processing(photo_path):
+                append_to_csv(camera_id, CORE.config.output_folder + "/failed_" + photo_name)
+                return jsonify({'success': False, 'message': 'Error: An error occurred while processing images'})
+            append_to_csv(camera_id, CORE.config.output_folder + "/success_" + photo_name)
             return jsonify({'success': True, 'message': 'The frame has been saved successfully.'})
 
-    return jsonify({'success': False, 'message': 'Error: unable to save frame as image.'})
+        return jsonify({'success': False, 'message': 'Error: unable to save frame as image.'})
 
 # Supporting functions
 
