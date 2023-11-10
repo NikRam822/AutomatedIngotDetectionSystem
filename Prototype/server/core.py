@@ -74,8 +74,15 @@ class Core:
 
         return cameras_info
 
+    def release_all_cameras(self):
+        for camera in self.running_cameras.values():
+            if camera is not None:
+                camera.stop()
+        self.running_cameras = {}
+
     def choose_camera(self, camera_id):
         self.logger.debug("Starting stream from Camera " + str(camera_id))
+        self.release_all_cameras()
         camera = Camera(video_source=camera_id)
         camera.run()
         self.running_cameras[camera_id] = camera
@@ -87,7 +94,8 @@ class Core:
         while True:
             frame = camera.get_last_frame()
             yield (b'--frame\r\n'
-                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
 
     def next_unmarked_image(self):
         self.logger.debug("Getting next unmarked image...")
