@@ -19,7 +19,7 @@ class Camera:
 
         self.fps = fps
         self.video_source = video_source
-        self.camera = cv2.VideoCapture(video_source)
+        self.camera = cv2.VideoCapture(video_source,cv2.CAP_DSHOW)
         # We want a max of 2s history to be stored, thats 5s*fps
         self.max_frames = 2 * fps
         self.frames = []
@@ -56,8 +56,13 @@ class Camera:
         self.logger.info("Thread stopped successfully")
 
     def stop(self):
+        global THREAD
         self.logger.debug("Stopping thread")
         self.is_running = False
+        if THREAD is not None:
+            THREAD.join()
+            THREAD = None
+        self.camera.release()
 
     def get_last_frame(self, _bytes=True):
         if len(self.frames) > 0:
@@ -84,3 +89,6 @@ class Camera:
 
         self.logger.error("Photo is not saved to " + path)
         return False
+
+    def is_released(self):
+        return not self.is_running
