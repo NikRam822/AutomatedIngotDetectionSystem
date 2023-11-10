@@ -22,7 +22,7 @@ pip3 install -r requirements.txt
 ### Windows
 ```bash
 cd Prototype/server
-python flask_server.py
+waitress-serve --host=127.0.0.1 --port=5000 flask_server:app
 ```
 And then open `../client/index.html` in browser from the Explore.
 ### Linux/MacOS
