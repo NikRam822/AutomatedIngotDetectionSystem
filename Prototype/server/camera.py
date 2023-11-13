@@ -19,7 +19,7 @@ class Camera:
 
         self.fps = fps
         self.video_source = video_source
-        self.camera = cv2.VideoCapture(video_source,cv2.CAP_DSHOW)
+        self.camera = cv2.VideoCapture(video_source)
         # We want a max of 2s history to be stored, thats 5s*fps
         self.max_frames = 2 * fps
         self.frames = []
