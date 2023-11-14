@@ -19,6 +19,21 @@ Server application and simple web-client for assessing aluminum ingot defects.
 - Flask Framework
 - CV2
 
+## Usage instructions
+### I Taking a photo
+Given: No ingot is in the capture of camera; the view from camera view is displayed; the image frame displays "no image"
+1. Tap 'Take a photo'
+2. Photo processing
+3. ml estimating
+Expected result: the cropped image is displayed in GUI in the image frame; the estimated decision is displayed
+
+### II Assessing
+Given the cropped image is displayed in GUI in the image frame; the estimated decision is displayed
+1. User taps one of 5 options (OK/...)
+Expected result: 
+1. the comment about submission is displayed for 5 sec.; the image is disappeared 5 sec after the action is performed; 
+2. after the image disappeared the 'no image' blank is displayed
+
 # Installation
 ## Prerequisites
 - Python 3.9
