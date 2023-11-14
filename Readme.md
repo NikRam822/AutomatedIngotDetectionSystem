@@ -2,6 +2,10 @@
 
 ## Project Description
 Server application and simple web-client for assessing aluminum ingot defects.
+
+## Demo 
+![demo.jpg](Documentation/images/demo.jpg)
+
 ## Feature list
 - Camera detection
 - Camera settings
