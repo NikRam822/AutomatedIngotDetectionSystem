@@ -3,4 +3,5 @@ unit-test-job:
 
   script:
     - echo "Running unit tests..."
-    - python -m pytest
+    - cd Prototype/server
+    - python -m pytest -v tests

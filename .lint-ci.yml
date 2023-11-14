@@ -3,6 +3,6 @@ linter-job:
 
   script:
     - echo "Running linter..."
-    - pylint --load-plugins pylint_flask Prototype/server/*.py
+    - pylint --rc-file .pylint.rc Prototype/server/*.py
 
   allow_failure: true

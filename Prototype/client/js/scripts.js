@@ -16,6 +16,7 @@ function initialize() {
     getAllCameras();
     getDecisionsList();
     registerListeners();
+    nextImage();
 }
 
 function sendEvent(name, attributes = null) {
@@ -251,7 +252,7 @@ function doc_keyUp(event) {
 
         default:
             break;
-    } 
+    }
 }
 
 // Function to update brightness and contrast
