@@ -16,7 +16,6 @@ class Config:
         self.input_folder = 'data/input'
         self.output_folder = 'data/marked'
         self.events_folder = 'data/events'
-        self.csv_file_path = 'data/db/data.csv'
         self.experiments = []
 
         fullpath = os.path.abspath(filepath)
@@ -43,7 +42,6 @@ class Config:
         self.input_folder = os.path.abspath(directories['raw_images'])
         self.output_folder = os.path.abspath(directories['marked_images'])
         self.events_folder = os.path.abspath(directories['events'])
-        self.csv_file_path = os.path.join(self.db_folder, 'data.csv')
 
     def _read_experiments(self, conf):
         """Try to parse experiments from the config (use default if no experiments section provided)"""

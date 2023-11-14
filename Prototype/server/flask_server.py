@@ -44,7 +44,7 @@ def get_decisions():
 @cross_origin(supports_credentials=True)
 def get_next_image():
     """Endpoint to retrieve next unmarked image. Only images without 'final_mark' set in the DB file will be returned."""
-    result = CORE.next_unmarked_image()
+    result = CORE.last_unmarked_image()
     if not result:
         return jsonify({"error": "No images available"}), 404
     return jsonify(result)
