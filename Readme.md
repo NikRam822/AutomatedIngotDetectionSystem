@@ -37,7 +37,7 @@ The server configuration is placed in the `config.ini` file inside the `server` 
 Currently it contains only paths to the database, logs, and images. You are free to use relative or absolute paths for those directories, but be sure that the user who runs the server will have access to the specified directories. Otherwise the server will fail to run.
 # Database
 Csv file is a simulation of a database for storing server data.
-The file is generated on the basis of images in the output folder (now there are images for demo). 
+The file is generated on the basis of images in the output folder (now there are images for demo).
 
 The file looks as follows:
 ![img.png](Documentation/images/img.png)
@@ -72,5 +72,10 @@ pip install pylint_flask
 ```
 ## Run Flask lint
 ```bash
-pylint --load-plugins pylint_flask Prototype/server/*.py
+pylint --rc-file .pylint.rc Prototype/server/*.py
+```
+## Run tests
+```bash
+cd Prototype/server
+python -m pytest -v tests
 ```
