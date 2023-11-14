@@ -32,16 +32,14 @@ class Core:
         self.logger.info('Enabled experiments: %s', str(self.config.experiments))
 
         self.ai = AI(Core.decisions)
-        self.database = Database(self.config.csv_file_path)
+        self.database = Database(self.config.db_folder)
 
         self.cameras_info = []
         self.running_cameras = {}
 
         if self.config.experiments.count('collect_events'):
             os.makedirs(self.config.events_folder, exist_ok=True)
-            current_time = datetime.datetime.now().strftime('%Y-%m-%d')
-            events_file = os.path.join(self.config.events_folder, current_time + '.csv')
-            self.event_collector = EventsCollector(events_file)
+            self.event_collector = EventsCollector(self.config.events_folder)
 
     def log_event(self, event):
         """Save analytics event for future analysis, if necessary."""
@@ -107,10 +105,10 @@ class Core:
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
-    def next_unmarked_image(self):
+    def last_unmarked_image(self):
         """Return next unmarked image in a special format."""
         self.logger.debug('Getting next unmarked image...')
-        row = self.database.next_unmarked()
+        row = self.database.last_unmarked()
         if row is None:
             return None
         photo_path = os.path.join(self.config.output_folder, row.image_name)
