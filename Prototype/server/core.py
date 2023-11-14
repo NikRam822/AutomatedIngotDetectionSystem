@@ -3,23 +3,23 @@ Core module
 """
 
 import datetime
+import logging
+import logging.config
 import os
 
 from camera import Camera
-
 from config import Config
 from database import Database
+from decision import Decisions
 from events import EventsCollector
 
-import logging
-import logging.config
+from image_analysis import AI
+from image_processing import image_processing
+
 from log_config import log_config
 
-from decision import Decisions
-from img_process_func import image_processing
-from image_analysis import classify_image
-
 class Core:
+    """Core module. It organizes all image processing and other manipulations."""
 
     decisions = [ Decisions.ok, Decisions.dross, Decisions.color, Decisions.no_ingot, Decisions.bad_image ]
 
@@ -28,39 +28,44 @@ class Core:
         logging.config.dictConfig(log_config(os.path.join(self.config.log_folder, 'logfile.log')))
         self.logger = logging.getLogger(__name__)
 
-        self.logger.info(f"Initializing processing core...")
-        self.logger.info(f"Enabled experiments: {self.config.experiments}")
+        self.logger.info('Initializing processing core...')
+        self.logger.info('Enabled experiments: %s', str(self.config.experiments))
 
+        self.ai = AI(Core.decisions)
         self.database = Database(self.config.csv_file_path)
-        # self.database.update_from_folder(self.config.input_folder)
 
+        self.cameras_info = []
         self.running_cameras = {}
 
         if self.config.experiments.count('collect_events'):
             os.makedirs(self.config.events_folder, exist_ok=True)
-            current_time = datetime.datetime.now().strftime("%Y-%m-%d")
-            events_file = os.path.join(self.config.events_folder, f"{current_time}.csv")
+            current_time = datetime.datetime.now().strftime('%Y-%m-%d')
+            events_file = os.path.join(self.config.events_folder, current_time + '.csv')
             self.event_collector = EventsCollector(events_file)
-    
+
     def log_event(self, event):
+        """Save analytics event for future analysis, if necessary."""
         if not self.event_collector:
             return True
         if 'name' not in event:
             return False
         self.event_collector.save_event(event['name'], event['attributes'])
         return True
-    
+
     def get_all_decisions(self):
-        self.logger.debug("Enumerating available decisions")
+        """Send all available decisions to show them in the UI."""
+        self.logger.debug('Enumerating available decisions')
         result = []
         for value in Core.decisions:
-            result.append({'key': value.key, 'type': value.type, 'label': value.label})
+            result.append({'key': value.key, 'type': value.kind, 'label': value.label})
         return result
-    
-    def get_all_cameras(self):
-        self.logger.debug("Enumerating available cameras")
 
-        cameras_info = []
+    def get_all_cameras(self, force=False):
+        """Enumerate all available cameras."""
+        self.logger.debug('Enumerating available cameras')
+
+        if not force and len(self.cameras_info) > 0:
+            return self.cameras_info
 
         for camera_id in range(10):
             camera = Camera(fps=1, video_source=camera_id)
@@ -70,25 +75,31 @@ class Core:
                     'video': f'/video_feed/{camera_id}',
                     'photo': f'/photo/{camera_id}'
                 }
-                cameras_info.append(camera_info)
+                self.cameras_info.append(camera_info)
 
-        return cameras_info
+        return self.cameras_info
 
     def release_all_cameras(self):
+        """Release all captured cameras so they could be used again."""
         for camera in self.running_cameras.values():
             if camera is not None:
                 camera.stop()
         self.running_cameras = {}
 
     def choose_camera(self, camera_id):
-        self.logger.debug("Starting stream from Camera " + str(camera_id))
-        self.release_all_cameras()
+        """Choose a camera for capture."""
+        camera = self.running_cameras.get(camera_id)
+        if camera is not None:
+            return
+
+        self.logger.debug('Starting stream from Camera %d', camera_id)
         camera = Camera(video_source=camera_id)
         camera.run()
         self.running_cameras[camera_id] = camera
 
     def generate_frames(self, camera_id):
-        camera = self.running_cameras[camera_id]
+        """Run an infinite loop of taking frames from the camera."""
+        camera = self.running_cameras.get(camera_id)
         if camera is None:
             return
         while True:
@@ -96,9 +107,9 @@ class Core:
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
-
     def next_unmarked_image(self):
-        self.logger.debug("Getting next unmarked image...")
+        """Return next unmarked image in a special format."""
+        self.logger.debug('Getting next unmarked image...')
         row = self.database.next_unmarked()
         if row is None:
             return None
@@ -114,13 +125,14 @@ class Core:
         return {'id': row.image_id, 'source': photo_path, 'decision': decision}
 
     def save_frame(self, camera_id, brightness, contrast):
-        self.logger.debug("Trying to take a picture...")
+        """Save the most recent captured frame as an image and run it through analysis pipeline."""
+        self.logger.debug('Trying to take a picture...')
         camera = self.running_cameras[camera_id]
         if camera is None:
             return False
 
-        current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S%f")[:-3]
-        photo_name = f'{current_time}_cam_{camera_id}.jpg'
+        current_time = datetime.datetime.now().strftime('%Y%m%d_%H%M%S%f')[:-3]
+        photo_name = current_time + '_cam_' + str(camera_id) + '.jpg'
         photo_path = os.path.join(self.config.input_folder, photo_name)
         if not camera.save_photo(path=photo_path, contrast=contrast, brightness=brightness):
             return False
@@ -128,16 +140,18 @@ class Core:
         pre_mark = image_processing(photo_path, self.config.output_folder).key
         ml_mark = ''
         if pre_mark == Decisions.ok.key:
-            ml_mark = classify_image(photo_path).key
+            ml_mark = self.ai.classify_image(photo_path).key
 
         self.database.append_to_db(ingot_id=0, camera_id=camera_id, photo_name=photo_name, pre_mark=pre_mark, ml_mark=ml_mark)
         return True
 
     def submit_mark(self, image_id, mark):
-        self.logger.debug(f"Submitting decision for {image_id}: {mark}")
-        return self.database.update_mark(img_id=image_id, final_mark=mark)
+        """Save a final mark from user input."""
+        self.logger.debug('Submitting decision for image_id %d: %s', image_id, mark)
+        return self.database.update_mark(image_id, mark)
 
     def _decision_description(self, decision, source):
+        """Internal helper function for decision label decoration."""
         if source == 'User':
             prefix = 'Decision: '
         else:
@@ -145,4 +159,4 @@ class Core:
         for val in Core.decisions:
             if val.key == decision:
                 return prefix + val.label
-        return "";
+        return ''

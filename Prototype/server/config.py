@@ -1,7 +1,14 @@
+"""
+The Configuration module.
+It handles config.ini file: reads the configuration and stores some settings adjusted by the user.
+"""
+
 import os
 from configparser import ConfigParser
 
 class Config:
+    """The configuration object."""
+
     def __init__(self, filepath):
         self.config_file = filepath
         self.db_folder = 'data/db'
@@ -25,6 +32,7 @@ class Config:
         self._make_dirs()
 
     def _read_config(self, conf):
+        """Try to parse working directories from the config"""
         if conf.has_section('directories'):
             directories = dict(conf.items('directories'))
         else:
@@ -38,11 +46,15 @@ class Config:
         self.csv_file_path = os.path.join(self.db_folder, 'data.csv')
 
     def _read_experiments(self, conf):
+        """Try to parse experiments from the config (use default if no experiments section provided)"""
         if conf.has_section('experiments'):
             raw_experiments = dict(conf.items('experiments'))
             self.experiments = [k for k, v in raw_experiments.items() if int(v) == 1]
+        else:
+            self.experiments = []
 
     def _make_dirs(self):
+        """Prepare working directories"""
         os.makedirs(self.log_folder, exist_ok=True)
         os.makedirs(self.db_folder, exist_ok=True)
         os.makedirs(self.input_folder, exist_ok=True)

@@ -1,4 +1,10 @@
+"""
+Configuration for logging module.
+Do not forget to add named logger section in the 'loggers' dictionary for every new module.
+"""
+
 def log_config(filename):
+    """Returns a configuration JSON for the logging object."""
     return {
     'version': 1,
     'disable_existing_loggers': True,
