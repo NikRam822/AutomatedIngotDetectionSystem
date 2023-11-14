@@ -1,5 +1,19 @@
-# About
+# Ingot Surface Defect Detection
+
+## Project Description
 Server application and simple web-client for assessing aluminum ingot defects.
+## Feature list
+- Camera detection
+- Camera settings
+- Shortcuts
+- Data storage
+- Verdict of user
+- Image processing
+## Frameworks and Technologies used
+- Python
+- HTML & CSS
+- Flask Framework
+- CV2
 
 # Installation
 ## Prerequisites
