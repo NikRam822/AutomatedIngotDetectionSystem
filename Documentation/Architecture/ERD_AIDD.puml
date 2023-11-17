@@ -1,0 +1,25 @@
+@startuml "ERD"
+
+!define PK <<PK>>
+
+skinparam linetype ortho
+
+DATABASE "Database" {
+    entity Record {
+        * image_id : string PK
+        --
+        * ingot_id: string
+        * camera_id : string
+        * image_name : string
+          processing_mark : Mark
+          ml_mark : Mark
+          final_mark : Mark
+    }
+
+    entity Mark {
+        * mark: string
+    }
+
+    Record --o{ Mark
+}
+@enduml
