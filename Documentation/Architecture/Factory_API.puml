@@ -1,0 +1,16 @@
+@startuml "Factory API"
+
+participant AIDD as server #LightBlue
+participant "Factory API" as API #LightSalmon
+participant "Factory Line" as line #LightSteelBlue
+participant "Robot Arm" as robot #LightGoldenRodYellow
+
+server -> API: Listen to Signal
+line -> API: Ingot Ready
+server <-- API: New Ingot Signal
+server -> server: Analyse Ingot
+server -> API: Send Decision
+API -> robot: Send Command
+robot --> line: Manipulate Ingot
+
+@enduml
