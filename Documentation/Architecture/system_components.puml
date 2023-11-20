@@ -14,8 +14,8 @@ package "Client" {
 package "Server" {
     component "Router" as router
     component "Core" as core
-    component "Image Processor" as proc
-    component "Image Analizer" as analizer
+    component "Image Processor\n(OpenCV)" as proc
+    component "Image Analizer\n(AI)" as analizer
 
     component "Database" as db {
         file "data.csv" as csv
@@ -52,10 +52,6 @@ package "Server" {
     analizer -up-> core
 
     log -down-> logger
-}
-
-component "External\nDefects\nAnalizer" as ai {
-    analizer <-down-> ai: Use
 }
 
 package "Devices" {
