@@ -21,7 +21,7 @@ from log_config import log_config
 class Core:
     """Core module. It organizes all image processing and other manipulations."""
 
-    decisions = [ Decisions.ok, Decisions.dross, Decisions.color, Decisions.no_ingot, Decisions.bad_image ]
+    decisions = [Decisions.ok, Decisions.dross, Decisions.color, Decisions.no_ingot, Decisions.bad_image]
 
     def __init__(self):
         self.config = Config('config.ini')
@@ -40,6 +40,7 @@ class Core:
         if self.config.experiments.count('collect_events'):
             os.makedirs(self.config.events_folder, exist_ok=True)
             self.event_collector = EventsCollector(self.config.events_folder)
+        self.logger.info('http://127.0.0.1:5000/')
 
     def log_event(self, event):
         """Save analytics event for future analysis, if necessary."""

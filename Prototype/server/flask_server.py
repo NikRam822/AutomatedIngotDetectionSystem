@@ -5,7 +5,7 @@ It is a Flask server implementation with basic routing.
 import json
 import threading
 
-from flask import Flask, Response, request, jsonify
+from flask import Flask, Response, request, jsonify, render_template, send_file, make_response
 from flask_cors import CORS, cross_origin
 # from waitress import serve
 
@@ -13,7 +13,8 @@ from core import Core
 
 CORE = Core()
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../client', template_folder='../client')
+
 CORS(app, supports_credentials=True, origins=['*', 'null'])
 
 # Lock for thread safety
@@ -47,18 +48,37 @@ def get_next_image():
     result = CORE.last_unmarked_image()
     if not result:
         return jsonify({"error": "No images available"}), 404
-    return jsonify(result)
+
+    image_path = result['source']
+    image_id = result['id']
+    decision = result['decision']
+
+    response = make_response(send_file(image_path, mimetype='image/jpeg'))
+    response.headers['image_id'] = str(image_id)
+    response.headers['decision'] = str(decision)
+    return response
+
 
 @app.route('/submit', methods=['POST'])
 @cross_origin(supports_credentials=True)
 def submit_text():
     """Submitting the final decision from the user."""
-    data = request.get_json()
-    if 'id' not in data or 'text' not in data:
+    image_id = request.form.get('id')
+    mark_text = request.form.get('text')
+
+    if not image_id or not mark_text:
         return jsonify({"error": "Missing 'id' or 'text' in the request"}), 400
-    if CORE.submit_mark(image_id=data['id'], mark=data['text']):
+
+    if CORE.submit_mark(image_id=image_id, mark=mark_text):
         return jsonify({"success": True})
-    return jsonify({"error": f"Image with id {data['id']} not found"}), 404
+    return jsonify({"error": f"Image with id {image_id} not found"}), 404
+
+
+@app.route('/')
+@cross_origin(supports_credentials=True)
+def get_index():
+    return render_template('index.html')
+
 
 @app.route('/camera_detection')
 @cross_origin(supports_credentials=True)
@@ -94,7 +114,6 @@ def save_frame(camera_id):
     if CORE.save_frame(camera_id):
         return jsonify({'success': True, 'message': 'The frame has been saved successfully.'})
     return jsonify({'success': False, 'message': 'Error: unable to save frame as image.'})
-
 
 if __name__ == '__main__':
     # For dev server (flask --app flask_server run)
