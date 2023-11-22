@@ -66,6 +66,13 @@ input[type="range"] {
     align-items: center;
 }
 
+.panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: space-between;
+}
+
 .button {
     background-color: #26C485;
     color: #fff;

@@ -7,7 +7,7 @@ import logging
 import logging.config
 import os
 
-from camera import Camera
+from camera import Camera, CameraSettings
 from config import Config
 from database import Database
 from decision import Decisions
@@ -84,6 +84,19 @@ class Core:
                 camera.stop()
         self.running_cameras = {}
 
+    def get_camera_settings(self, camera_id):
+        """Return current settings for the specified camera"""
+        camera = self.running_cameras.get(camera_id)
+        if camera is None:
+            return []
+        return camera.settings.to_dict()
+
+    def set_camera_settings(self, camera_id, settings):
+        """Set new settings for the specified camera"""
+        camera = self.running_cameras.get(camera_id)
+        if camera is not None:
+            camera.apply_settings(settings)
+
     def choose_camera(self, camera_id):
         """Choose a camera for capture."""
         camera = self.running_cameras.get(camera_id)
@@ -122,7 +135,7 @@ class Core:
             decision = ''
         return {'id': row.image_id, 'source': photo_path, 'decision': decision}
 
-    def save_frame(self, camera_id, brightness, contrast):
+    def save_frame(self, camera_id):
         """Save the most recent captured frame as an image and run it through analysis pipeline."""
         self.logger.debug('Trying to take a picture...')
         camera = self.running_cameras[camera_id]
@@ -132,7 +145,7 @@ class Core:
         current_time = datetime.datetime.now().strftime('%Y%m%d_%H%M%S%f')[:-3]
         photo_name = current_time + '_cam_' + str(camera_id) + '.jpg'
         photo_path = os.path.join(self.config.input_folder, photo_name)
-        if not camera.save_photo(path=photo_path, contrast=contrast, brightness=brightness):
+        if not camera.save_photo(path=photo_path):
             return False
 
         pre_mark = image_processing(photo_path, self.config.output_folder).key

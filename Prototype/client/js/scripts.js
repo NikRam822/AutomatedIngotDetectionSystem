@@ -11,11 +11,18 @@ function showId(id) {
     $('#ingotId').text(id);
 }
 
+function debounce(func, timeout = 300) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { func.apply(this, args); }, timeout);
+    };
+}
+
 function initialize() {
     getExperiments()
     getAllCameras();
     getDecisionsList();
-    registerListeners();
     nextImage();
 }
 
@@ -26,11 +33,6 @@ function sendEvent(name, attributes = null) {
         contentType: 'application/json',
         data: JSON.stringify({ 'name': name, 'attributes': attributes })
     });
-}
-
-function registerListeners() {
-    document.getElementById('brightness').addEventListener('input', updateBrightnessContrast);
-    document.getElementById('contrast').addEventListener('input', updateBrightnessContrast);
 }
 
 function applyExperiments(values) {
@@ -113,18 +115,85 @@ var isCameraSetupPanelShown = false;
 function toggleCameraSetup() {
     const panel = document.getElementById('cameraSetupPanel');
     const button = document.getElementById('cameraSetupButton');
+    const container = document.getElementById('cameraSettings');
 
     if (isCameraSetupPanelShown) {
         panel.style = "display: none;";
         button.textContent = "Setup";
         isCameraSetupPanelShown = false;
+
+        var children = [];
+        Array.prototype.forEach.call(container.getElementsByTagName('div'), function(el) {
+            children.push(el);
+        });
+        children.forEach((el) => container.removeChild(el));
+
     } else {
+        const selectedCamera = document.getElementById('cameraSelect').value;
+        fetch(server + `/camera_settings/${selectedCamera}`, {
+            method: 'GET'
+        })
+        .then(response => response.json())
+        .then(settings => {
+            settings.forEach(object => {
+                const key = object['key'];
+                const row = document.createElement('div');
+                row.className = 'row';
+                const label = document.createElement('label');
+                label.setAttribute('for', key);
+                label.innerHTML = object['label'];
+                const input = document.createElement('input');
+                input.setAttribute('id', key);
+                input.setAttribute('type', 'range');
+                input.setAttribute('min', object['from']);
+                input.setAttribute('max', object['to']);
+                input.setAttribute('value', object['value']);
+                if (object['step'] != null) {
+                    input.setAttribute('step', object['step']);
+                }
+                const debounceHandle = debounce(changeCameraSettings);
+                input.addEventListener('input', debounceHandle);
+                row.appendChild(label);
+                row.appendChild(input);
+                container.appendChild(row);
+            });
+        })
+        .catch(error => {
+            console.error('There was an error:', error);
+        });
+
         panel.style = "display: grid; gap: 20px;";
         button.textContent = "Apply";
         isCameraSetupPanelShown = true;
     }
 
     sendEvent('toggle_setup_panel', {'is_shown': isCameraSetupPanelShown})
+}
+
+function changeCameraSettings(e) {
+    const selectedCamera = document.getElementById('cameraSelect').value;
+    const { id, value } = e.target;
+
+    if (selectedCamera == '' || id == '' || value == '') {
+        console.log(`Missing values: camera=${selectedCamera}, key=${id}, value=${value}`);
+        return;
+    }
+
+    sendEvent('adjust_camera', { 'camera': selectedCamera, id: value });
+
+    $.ajax({
+        url: server + '/camera_settings/' + selectedCamera,
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ key: id, value: value }),
+        xhrFields: {
+            withCredentials: true
+        },
+        success: function (_) {},
+        error: function (error) {
+            console.log(error.responseText);
+        }
+    });
 }
 
 function changeCamera() {
@@ -145,10 +214,8 @@ function saveFrame() {
 
     $('#success_message_photo').text('');
     const selectedCamera = document.getElementById('cameraSelect').value;
-    const brightness = document.getElementById('brightness').value;
-    const contrast = document.getElementById('contrast').value;
 
-    fetch(server + `/save_frame/${selectedCamera}?brightness=${brightness}&contrast=${contrast}`, {
+    fetch(server + `/save_frame/${selectedCamera}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
     })
@@ -253,15 +320,4 @@ function doc_keyUp(event) {
         default:
             break;
     }
-}
-
-// Function to update brightness and contrast
-function updateBrightnessContrast() {
-    const brightness = document.getElementById('brightness').value;
-    const contrast = document.getElementById('contrast').value;
-    const videoFeed = document.getElementById('videoFeed');
-
-    sendEvent('adjust_camera', {'brightness': brightness, 'contrast': contrast})
-
-    videoFeed.style.filter = `brightness(${parseInt(brightness)}%) contrast(${parseFloat(contrast)})`;
 }
