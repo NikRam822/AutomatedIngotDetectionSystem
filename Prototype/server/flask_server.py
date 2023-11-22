@@ -66,6 +66,20 @@ def index():
     """Request all available cameras."""
     return json.dumps(CORE.get_all_cameras())
 
+@app.route('/camera_settings/<int:camera_id>', methods=['GET'])
+@cross_origin(supports_credentials=True)
+def get_camera_settings(camera_id):
+    """Get current camera settings"""
+    return jsonify(CORE.get_camera_settings(camera_id))
+
+@app.route('/camera_settings/<int:camera_id>', methods=['POST'])
+@cross_origin(supports_credentials=True)
+def set_camera_settings(camera_id):
+    """Set new settings for the camera"""
+    settings = request.get_json()
+    CORE.set_camera_settings(camera_id, settings)
+    return jsonify({})
+
 @app.route('/video_feed/<int:camera_id>')
 @cross_origin(supports_credentials=True)
 def video_feed(camera_id):
@@ -77,9 +91,7 @@ def video_feed(camera_id):
 @cross_origin(supports_credentials=True)
 def save_frame(camera_id):
     """Save a frame from the selected camera and prepare it for analysis."""
-    brightness = request.args.get('brightness', default=1.0, type=float)
-    contrast = request.args.get('contrast', default=1.0, type=float)
-    if CORE.save_frame(camera_id=camera_id, brightness=brightness, contrast=contrast):
+    if CORE.save_frame(camera_id):
         return jsonify({'success': True, 'message': 'The frame has been saved successfully.'})
     return jsonify({'success': False, 'message': 'Error: unable to save frame as image.'})
 
