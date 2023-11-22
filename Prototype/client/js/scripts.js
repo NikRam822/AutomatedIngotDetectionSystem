@@ -214,34 +214,35 @@ function saveFrame() {
 
     $('#success_message_photo').text('');
     const selectedCamera = document.getElementById('cameraSelect').value;
-
+    const formData = new FormData();
     fetch(server + `/save_frame/${selectedCamera}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        body: formData,
+        credentials: 'include'
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Error while executing the query.');
-        }
-        return response.json();
-    })
-    .then(data => {
-        disableDecisions(true)
-        var message = data.message
-        if (data.success) {
-            console.log('Photo successful');
-            $('#success_message_photo').text(message);
-            setTimeout(function () { $('#success_message_photo').text(''); }, messageTimeout);
-        } else {
-            console.log('Photo failed');
-            $('#success_message_photo').text(message);
-            setTimeout(function () { $('#success_message_photo').text(''); }, messageTimeout);
-        }
-        nextImage()
-    })
-    .catch(error => {
-        console.error('There was an error:', error);
-    });
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error while executing the query.');
+            }
+            return response.json();
+        })
+        .then(data => {
+            disableDecisions(true);
+            var message = data.message;
+            if (data.success) {
+                console.log('Photo successful');
+                $('#success_message_photo').text(message);
+                setTimeout(function () { $('#success_message_photo').text(''); }, messageTimeout);
+            } else {
+                console.log('Photo failed');
+                $('#success_message_photo').text(message);
+                setTimeout(function () { $('#success_message_photo').text('');}, messageTimeout);
+            }
+            nextImage()
+        })
+        .catch(error => {
+            console.error('There was an error:', error);
+        });
 }
 
 function nextImage() {
@@ -250,54 +251,66 @@ function nextImage() {
     $('#decisionInput').val('');
     $('#prediction').text('');
 
-    $.ajax({
-        url: server + '/image_next',
-        type: 'GET',
-        xhrFields: {
-            withCredentials: true
+    fetch(server + '/image_next', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'image/jpeg',
         },
-        success: function (data) {
-            currentIdImg = data.id;
+        credentials: 'include'
+    })
+        .then(response => {
+            currentIdImg = response.headers.get('image_id');
+            decision = response.headers.get('decision')
             localStorage.setItem('currentIdImg', currentIdImg);
-            $('#displayed_image').attr('src', data.source);
             $('#ingotId').text(currentIdImg);
-            $('#prediction').text(data.decision);
+            $('#prediction').text(decision);
             disableDecisions(false)
-        },
-        error: function (error) {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            const imageUrl = URL.createObjectURL(blob);
+            $('#displayed_image').attr('src', imageUrl);
+            disableDecisions(false)})
+        .catch(error => {
+            console.error('Error fetching image:', error);
             currentIdImg = 0;
             localStorage.setItem('currentIdImg', currentIdImg);
             $('#displayed_image').attr('src', "images/not_found.jpg");
             $('#ingotId').text('No ingot');
-            disableDecisions(true)
-        }
-    });
+            disableDecisions(true);
+        });
 }
 
 function submitMark(key, is_hotkey = false) {
-    sendEvent('submit_mark', {'mark': key, 'hotkey': is_hotkey})
+    sendEvent('submit_mark', {'mark': key, 'hotkey': is_hotkey});
 
-    disableDecisions(true)
+    disableDecisions(true);
 
-    $.ajax({
-        url: server + '/submit',
-        type: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({ id: currentIdImg, text: key }),
-        xhrFields: {
-            withCredentials: true
-        },
-        success: function (data) {
+    const formData = new FormData();
+    formData.append('id', currentIdImg);
+    formData.append('text', key);
+
+    fetch(server + '/submit', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
             console.log('Submit successful');
             $('#success_message').text('Submit successful');
-            setTimeout(function () { $('#success_message').text(''); }, messageTimeout);
-            nextImage()
-        },
-        error: function (error) {
-            console.log(error.responseText);
-            disableDecisions(false)
-        }
-    });
+            setTimeout(function () {$('#success_message').text('');}, messageTimeout);
+            nextImage();
+        })
+        .catch(error => {
+            console.error('Error submitting mark:', error);
+            disableDecisions(false);
+        });
 }
 
 function doc_keyUp(event) {
