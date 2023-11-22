@@ -57,7 +57,7 @@ pip3 install -r requirements.txt
 cd Prototype/server
 waitress-serve --host=127.0.0.1 --port=5000 flask_server:app
 ```
-And then open `../client/index.html` in browser from the Explore.
+And then open `http://localhost:5000/` in browser.
 ### Linux/MacOS
 ```bash
 cd Prototype/server
