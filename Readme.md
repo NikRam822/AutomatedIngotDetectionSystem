@@ -62,24 +62,32 @@ And then open `http://localhost:5000/` in browser.
 ```bash
 cd Prototype/server
 source .venv/bin/activate   # only once in new terminal session
-python flask_server.py
-open ../client/index.html   # in another terminal session
+waitress-serve --host=127.0.0.1 --port=5000 flask_server:app
 ```
+open `http://localhost:5000/` in browser
+
 # Configuration
-The server configuration is placed in the `config.ini` file inside the `server` directory.
-Currently it contains only paths to the database, logs, and images. You are free to use relative or absolute paths for those directories, but be sure that the user who runs the server will have access to the specified directories. Otherwise the server will fail to run.
+The server configuration is placed in the config.ini file inside the server directory.
+It contains: 
+1. paths to the database, logs, raw and marked images and events; 
+You are free to use relative or absolute paths for those directories, but be sure that the user who runs the server will have access to the specified directories. Otherwise the server will fail to run.
+
+2. parameters for enabling (1) or disabling (0) experiments: events collection and hotkeys usage.
 # Database
 Csv file is a simulation of a database for storing server data.
-The file is generated on the basis of images in the output folder (now there are images for demo).
+Csv is generated after the first photo is received
 
 The file looks as follows:
 ![img.png](Documentation/images/img.png)
 
 There are 4 columns in this file:
-1. id_camera - Camera from which the image was received (so far, always 1, because there is only one camera)
-2. id_img - generated image id
-3. source_img - absolute path to the image files from aidd/Prototype/client/output
-4. text - operator's verdict in text form
+1. ingot_id - From the factory (always 0, because there is no implementation of interaction with the factory)
+2. camera_id - Camera from which the image was received (so far, always 1, because there is only one camera)
+3. image_id - Generated image id
+4. image_name - File name in the destination folder
+5. processing_mark - Photo preprocessing output
+6. ml_mark - Decision from AI
+7. final_mark - Decision from operator
 # Development
 To update pip packages after installing them to the local development environment, run the following commands:
 ```bash
@@ -94,8 +102,8 @@ source .venv/bin/activate   # (Linux/macOS) run only once in new terminal sessio
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
 flask --app flask_server run
-open ../client/index.html
 ```
+open `http://localhost:5000/` in browser
 # CI/CD
 ## Prerequisites
 Install `pylint` and `pylint-flask`:
@@ -112,23 +120,3 @@ pylint --rc-file .pylint.rc Prototype/server/*.py
 cd Prototype/server
 python -m pytest -v tests
 ```
-# MIT License
-Copyright (c) [2023] [Alina Filippenko @a.filippenko; Andrei Chevozerov @a.chevozerov; Aslan Nurlybekov @a.nurlybekov; Nikita Ramzin @n.ramzin]
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
